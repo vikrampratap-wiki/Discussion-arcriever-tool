@@ -1502,6 +1502,68 @@
         const modalOauthBtn = document.getElementById('btn-modal-oauth-login');
         if (modalOauthBtn) modalOauthBtn.addEventListener('click', startWikimediaOAuthLogin);
 
+        // 4.1 त्वरित सदस्य नाम सत्यापन एवं अनलॉक (Instant Unlock)
+        async function handleQuickUnlock(val, resBox) {
+            if (!val) {
+                alert('कृपया अपना विकिपीडिया सदस्य नाम दर्ज करें!');
+                return;
+            }
+            if (resBox) {
+                resBox.style.display = 'block';
+                resBox.innerHTML = '<span class="text-muted">⏳ विकिपीडिया API द्वारा खाते की जाँच हो रही है...</span>';
+            }
+            logMessage('सदस्य खाते की जाँच हो रही है: <b>' + escapeHtml(val) + '</b>...', 'info');
+            try {
+                const res = await checkUserEligibility(val);
+                if (res && res.exists && res.isAutoconfirmed) {
+                    state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
+                    localStorage.setItem('da_wiki_user', res.username);
+                    localStorage.setItem('da_username', res.username);
+                    updateAccessControlUI(state.auth);
+                    const modal = document.getElementById('login-modal');
+                    if (modal) modal.style.display = 'none';
+                    if (resBox) resBox.style.display = 'none';
+                    logMessage('विकिपीडिया खाता <b>' + escapeHtml(res.username) + '</b> अधिकृत! उपकरण सफलतापूर्वक अनलॉक हो गया।', 'success');
+                    const targetInp = document.getElementById('page-input');
+                    const target = state.currentPageTitle || (targetInp ? targetInp.value : 'विकिपीडिया:चौपाल');
+                    loadPage(target);
+                } else if (res && !res.exists) {
+                    if (resBox) {
+                        resBox.innerHTML = '<span class="text-danger">❌ सदस्य <b>' + escapeHtml(val) + '</b> विकिपीडिया पर नहीं मिला। कृपया सही वर्तनी जाँचें।</span>';
+                    }
+                    logMessage('सदस्य ' + escapeHtml(val) + ' विकिपीडिया पर नहीं मिला।', 'error');
+                } else {
+                    if (resBox) {
+                        resBox.innerHTML = '<span class="text-danger">⚠️ खाता स्वतः स्थापित (Autoconfirmed - न्यूनतम 4 दिन पुराना व 10 संपादन) होना अनिवार्य है।</span>';
+                    }
+                    logMessage('खाता ' + escapeHtml(val) + ' स्वतः स्थापित अर्हता पूरी नहीं करता।', 'warning');
+                }
+            } catch (err) {
+                if (resBox) resBox.innerHTML = '<span class="text-danger">त्रुटि: ' + escapeHtml(err.message) + '</span>';
+                logMessage('सत्यापन नेटवर्क त्रुटि: ' + err.message, 'error');
+            }
+        }
+
+        const quickBtn = document.getElementById('btn-quick-unlock');
+        const quickInp = document.getElementById('quick-unlock-username');
+        const quickRes = document.getElementById('quick-unlock-result');
+        if (quickBtn && quickInp) {
+            quickBtn.addEventListener('click', () => handleQuickUnlock(quickInp.value.trim(), quickRes));
+            quickInp.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') handleQuickUnlock(quickInp.value.trim(), quickRes);
+            });
+        }
+
+        const modalQuickBtn = document.getElementById('btn-modal-quick-unlock');
+        const modalQuickInp = document.getElementById('modal-unlock-username');
+        const modalResBox = document.getElementById('verification-result-box');
+        if (modalQuickBtn && modalQuickInp) {
+            modalQuickBtn.addEventListener('click', () => handleQuickUnlock(modalQuickInp.value.trim(), modalResBox));
+            modalQuickInp.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') handleQuickUnlock(modalQuickInp.value.trim(), modalResBox);
+            });
+        }
+
         const saveClientBtn = document.getElementById('btn-save-client-id');
         const clientIdInp = document.getElementById('oauth-client-id-input');
         if (clientIdInp) clientIdInp.value = getOAuthClientId();
