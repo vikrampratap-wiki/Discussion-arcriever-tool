@@ -62,25 +62,6 @@
                     <div id="oauth-status-result" style="display: none; margin-top: 10px;"></div>
                 </div>
 
-                <!-- विकल्प 2: विकिपीडिया सक्रिय सत्र द्वारा 1-क्लिक त्वरित लॉगिन -->
-                <div class="auth-action-box" style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; margin-bottom: 16px; text-align: left;">
-                    <h4 style="margin: 0 0 6px 0; font-size: 14px; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
-                        <span>⚡</span> विकिपीडिया सक्रिय सत्र द्वारा 1-क्लिक लॉगिन:
-                    </h4>
-                    <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px;">
-                        यदि आप विकिपीडिया पर पहले से लॉगिन हैं, तो नीचे बटन दबाएँ — यह आपके ब्राउज़र के विकिपीडिया सत्र की स्वतः पुष्टि कर लेगा:
-                    </p>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <button id="btn-session-detect-login" class="btn btn-primary btn-sm">
-                            🔍 सक्रिय विकिपीडिया सत्र से लॉगिन करें
-                        </button>
-                        <a href="https://hi.wikipedia.org/wiki/Special:MyPage" target="_blank" class="link-btn">
-                            👤 सक्रिय खाता देखें (Special:MyPage) ↗
-                        </a>
-                    </div>
-                    <div id="session-detect-result" style="display: none; margin-top: 10px;"></div>
-                </div>
-
                 <div style="border-top: 1px solid var(--border-color); padding-top: 16px; text-align: left; font-size: 12.5px; color: var(--text-muted); line-height: 1.6;">
                     <strong>⚡ आसान विकिपीडिया एकीकरण (Zero-Login):</strong> अपने विकिपीडिया <a href="https://hi.wikipedia.org/wiki/Special:MyPage/common.js" target="_blank" class="link-btn">common.js</a> में निम्न पंक्ति जोड़ें:<br>
                     <code style="display: block; background: var(--bg-primary); padding: 6px 10px; border-radius: 4px; margin: 6px 0; font-size: 11.5px; border: 1px solid var(--border-subtle);">mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/DiscussionArchiver.js');</code>
@@ -638,18 +619,6 @@
                             </p>
                             <button id="btn-modal-oauth-login" class="btn btn-wikimedia" style="width:100%; justify-content:center; padding:9px 14px; font-weight:700;">
                                 🚀 विकिमीडिया OAuth से लॉगिन करें (Log in with Wikimedia)
-                            </button>
-                        </div>
-
-                        <div class="wiki-auth-step-box" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:6px; padding:14px; margin-bottom:10px;">
-                            <div style="font-weight:700; font-size:14px; margin-bottom:6px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
-                                <span>⚡</span> सक्रिय विकिपीडिया ब्राउज़र सत्र द्वारा लॉगिन:
-                            </div>
-                            <p style="margin:0 0 10px 0; font-size:12px; color:var(--text-secondary); line-height:1.5;">
-                                यदि आपके ब्राउज़र में विकिपीडिया पहले से खुला व लॉगिन है:
-                            </p>
-                            <button id="btn-modal-session-login" class="btn btn-primary btn-sm">
-                                🔍 सक्रिय सत्र से तुरंत लॉगिन करें
                             </button>
                         </div>
 

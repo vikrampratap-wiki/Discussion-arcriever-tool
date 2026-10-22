@@ -1133,25 +1133,6 @@ body {
                     <div id="oauth-status-result" style="display: none; margin-top: 10px;"></div>
                 </div>
 
-                <!-- विकल्प 2: विकिपीडिया सक्रिय सत्र द्वारा 1-क्लिक त्वरित लॉगिन -->
-                <div class="auth-action-box" style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; margin-bottom: 16px; text-align: left;">
-                    <h4 style="margin: 0 0 6px 0; font-size: 14px; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
-                        <span>⚡</span> विकिपीडिया सक्रिय सत्र द्वारा 1-क्लिक लॉगिन:
-                    </h4>
-                    <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px;">
-                        यदि आप विकिपीडिया पर पहले से लॉगिन हैं, तो नीचे बटन दबाएँ — यह आपके ब्राउज़र के विकिपीडिया सत्र की स्वतः पुष्टि कर लेगा:
-                    </p>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <button id="btn-session-detect-login" class="btn btn-primary btn-sm">
-                            🔍 सक्रिय विकिपीडिया सत्र से लॉगिन करें
-                        </button>
-                        <a href="https://hi.wikipedia.org/wiki/Special:MyPage" target="_blank" class="link-btn">
-                            👤 सक्रिय खाता देखें (Special:MyPage) ↗
-                        </a>
-                    </div>
-                    <div id="session-detect-result" style="display: none; margin-top: 10px;"></div>
-                </div>
-
                 <div style="border-top: 1px solid var(--border-color); padding-top: 16px; text-align: left; font-size: 12.5px; color: var(--text-muted); line-height: 1.6;">
                     <strong>⚡ आसान विकिपीडिया एकीकरण (Zero-Login):</strong> अपने विकिपीडिया <a href="https://hi.wikipedia.org/wiki/Special:MyPage/common.js" target="_blank" class="link-btn">common.js</a> में निम्न पंक्ति जोड़ें:<br>
                     <code style="display: block; background: var(--bg-primary); padding: 6px 10px; border-radius: 4px; margin: 6px 0; font-size: 11.5px; border: 1px solid var(--border-subtle);">mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/DiscussionArchiver.js');</code>
@@ -1712,18 +1693,6 @@ body {
                             </button>
                         </div>
 
-                        <div class="wiki-auth-step-box" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:6px; padding:14px; margin-bottom:10px;">
-                            <div style="font-weight:700; font-size:14px; margin-bottom:6px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
-                                <span>⚡</span> सक्रिय विकिपीडिया ब्राउज़र सत्र द्वारा लॉगिन:
-                            </div>
-                            <p style="margin:0 0 10px 0; font-size:12px; color:var(--text-secondary); line-height:1.5;">
-                                यदि आपके ब्राउज़र में विकिपीडिया पहले से खुला व लॉगिन है:
-                            </p>
-                            <button id="btn-modal-session-login" class="btn btn-primary btn-sm">
-                                🔍 सक्रिय सत्र से तुरंत लॉगिन करें
-                            </button>
-                        </div>
-
                         <div id="verification-result-box" style="display: none;"></div>
                     </div>
 
@@ -2192,7 +2161,26 @@ mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/Di
 
     // विकिमीडिया आधिकारिक OAuth 2.0 लॉगिन प्रारंभ करें
     async function startWikimediaOAuthLogin() {
-        const clientId = getOAuthClientId();
+        let clientId = getOAuthClientId();
+
+        // यदि Client ID डिफ़ॉल्ट/अस्थायी है या खाली है, तो उपयोगकर्ता को सूचित करें
+        if (!clientId || clientId === DEFAULT_OAUTH_CLIENT_ID) {
+            const entered = prompt(
+                'मेटा-विकिमीडिया (Meta-Wiki) पर इस उपकरण का पंजीकृत OAuth 2.0 Consumer Client ID आवश्यक है।\n\n' +
+                'यदि आपके पास मेटा-विकी (Special:OAuthConsumerRegistration) से प्राप्त Client ID है, तो यहाँ पेस्ट करें:\n' +
+                '(यदि नहीं है तो Cancel करें और विकिपीडिया common.js में DiscussionArchiver.js जोड़कर बिना OAuth के सीधे उपयोग करें)',
+                ''
+            );
+            if (entered && entered.trim()) {
+                clientId = entered.trim();
+                localStorage.setItem('da_oauth_client_id', clientId);
+                const inp = document.getElementById('oauth-client-id-input');
+                if (inp) inp.value = clientId;
+            } else {
+                return;
+            }
+        }
+
         const redirectUri = window.location.origin + window.location.pathname;
 
         try {
@@ -2278,26 +2266,6 @@ mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/Di
             }
         }
         return false;
-    }
-
-    // विकिपीडिया सक्रिय सत्र पहचान पॉपअप (Popup Session Detect)
-    function startSessionDetectLogin(resBox) {
-        if (!resBox) resBox = document.getElementById('session-detect-result');
-        if (resBox) {
-            resBox.style.display = 'block';
-            resBox.innerHTML = '<span class="text-muted">⏳ विकिपीडिया विंडो खोली जा रही है...</span>';
-        }
-
-        window.open('https://hi.wikipedia.org/wiki/Special:MyPage?da_auth=1', 'wikiAuthPopup', 'width=580,height=520,scrollbars=yes,resizable=yes');
-        logMessage('विकिपीडिया सक्रिय सत्र सत्यापन विंडो खोली गई...', 'info');
-
-        if (resBox) {
-            resBox.innerHTML = `
-                <div class="security-box" style="margin-top:8px;">
-                    <p style="margin-bottom:6px;"><strong>📌 विकिपीडिया विंडो में सक्रिय सत्र जाँचा जा रहा है...</strong></p>
-                    <p style="margin:0; font-size:12px;" class="text-secondary">यदि पॉपअप में लॉगिन पृष्ठ दिखे तो वहां लॉगिन करें। सत्यापन होते ही विंडो स्वतः बंद होकर टूल अनलॉक हो जाएगा।</p>
-                </div>`;
-        }
     }
 
     // पोस्ट-मेसेज श्रोता (PostMessage Listener for Wiki Auth Bridge)
@@ -3266,21 +3234,12 @@ mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/Di
             });
         });
 
-        // 4. विकिमीडिया OAuth 2.0 एवं सत्र प्रमाणीकरण बटन
+        // 4. विकिमीडिया OAuth 2.0 प्रमाणीकरण बटन
         const oauthBtn = document.getElementById('btn-oauth-login');
         if (oauthBtn) oauthBtn.addEventListener('click', startWikimediaOAuthLogin);
 
         const modalOauthBtn = document.getElementById('btn-modal-oauth-login');
         if (modalOauthBtn) modalOauthBtn.addEventListener('click', startWikimediaOAuthLogin);
-
-        const sessionDetectBtn = document.getElementById('btn-session-detect-login');
-        if (sessionDetectBtn) sessionDetectBtn.addEventListener('click', () => startSessionDetectLogin());
-
-        const modalSessionBtn = document.getElementById('btn-modal-session-login');
-        if (modalSessionBtn) modalSessionBtn.addEventListener('click', () => {
-            const resBox = document.getElementById('verification-result-box');
-            startSessionDetectLogin(resBox);
-        });
 
         const saveClientBtn = document.getElementById('btn-save-client-id');
         const clientIdInp = document.getElementById('oauth-client-id-input');

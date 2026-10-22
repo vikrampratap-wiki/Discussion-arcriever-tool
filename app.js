@@ -422,7 +422,26 @@
 
     // विकिमीडिया आधिकारिक OAuth 2.0 लॉगिन प्रारंभ करें
     async function startWikimediaOAuthLogin() {
-        const clientId = getOAuthClientId();
+        let clientId = getOAuthClientId();
+
+        // यदि Client ID डिफ़ॉल्ट/अस्थायी है या खाली है, तो उपयोगकर्ता को सूचित करें
+        if (!clientId || clientId === DEFAULT_OAUTH_CLIENT_ID) {
+            const entered = prompt(
+                'मेटा-विकिमीडिया (Meta-Wiki) पर इस उपकरण का पंजीकृत OAuth 2.0 Consumer Client ID आवश्यक है।\n\n' +
+                'यदि आपके पास मेटा-विकी (Special:OAuthConsumerRegistration) से प्राप्त Client ID है, तो यहाँ पेस्ट करें:\n' +
+                '(यदि नहीं है तो Cancel करें और विकिपीडिया common.js में DiscussionArchiver.js जोड़कर बिना OAuth के सीधे उपयोग करें)',
+                ''
+            );
+            if (entered && entered.trim()) {
+                clientId = entered.trim();
+                localStorage.setItem('da_oauth_client_id', clientId);
+                const inp = document.getElementById('oauth-client-id-input');
+                if (inp) inp.value = clientId;
+            } else {
+                return;
+            }
+        }
+
         const redirectUri = window.location.origin + window.location.pathname;
 
         try {
@@ -508,26 +527,6 @@
             }
         }
         return false;
-    }
-
-    // विकिपीडिया सक्रिय सत्र पहचान पॉपअप (Popup Session Detect)
-    function startSessionDetectLogin(resBox) {
-        if (!resBox) resBox = document.getElementById('session-detect-result');
-        if (resBox) {
-            resBox.style.display = 'block';
-            resBox.innerHTML = '<span class="text-muted">⏳ विकिपीडिया विंडो खोली जा रही है...</span>';
-        }
-
-        window.open('https://hi.wikipedia.org/wiki/Special:MyPage?da_auth=1', 'wikiAuthPopup', 'width=580,height=520,scrollbars=yes,resizable=yes');
-        logMessage('विकिपीडिया सक्रिय सत्र सत्यापन विंडो खोली गई...', 'info');
-
-        if (resBox) {
-            resBox.innerHTML = `
-                <div class="security-box" style="margin-top:8px;">
-                    <p style="margin-bottom:6px;"><strong>📌 विकिपीडिया विंडो में सक्रिय सत्र जाँचा जा रहा है...</strong></p>
-                    <p style="margin:0; font-size:12px;" class="text-secondary">यदि पॉपअप में लॉगिन पृष्ठ दिखे तो वहां लॉगिन करें। सत्यापन होते ही विंडो स्वतः बंद होकर टूल अनलॉक हो जाएगा।</p>
-                </div>`;
-        }
     }
 
     // पोस्ट-मेसेज श्रोता (PostMessage Listener for Wiki Auth Bridge)
@@ -1496,21 +1495,12 @@
             });
         });
 
-        // 4. विकिमीडिया OAuth 2.0 एवं सत्र प्रमाणीकरण बटन
+        // 4. विकिमीडिया OAuth 2.0 प्रमाणीकरण बटन
         const oauthBtn = document.getElementById('btn-oauth-login');
         if (oauthBtn) oauthBtn.addEventListener('click', startWikimediaOAuthLogin);
 
         const modalOauthBtn = document.getElementById('btn-modal-oauth-login');
         if (modalOauthBtn) modalOauthBtn.addEventListener('click', startWikimediaOAuthLogin);
-
-        const sessionDetectBtn = document.getElementById('btn-session-detect-login');
-        if (sessionDetectBtn) sessionDetectBtn.addEventListener('click', () => startSessionDetectLogin());
-
-        const modalSessionBtn = document.getElementById('btn-modal-session-login');
-        if (modalSessionBtn) modalSessionBtn.addEventListener('click', () => {
-            const resBox = document.getElementById('verification-result-box');
-            startSessionDetectLogin(resBox);
-        });
 
         const saveClientBtn = document.getElementById('btn-save-client-id');
         const clientIdInp = document.getElementById('oauth-client-id-input');
