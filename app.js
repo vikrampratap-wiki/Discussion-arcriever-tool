@@ -48,16 +48,16 @@
         theme: localStorage.getItem('da_theme') || 'light',
         activePreviewPayload: null,
         auth: {
-            username: localStorage.getItem('da_username') || 'विक्रम प्रताप',
+            username: localStorage.getItem('da_username') || '',
             botPassword: localStorage.getItem('da_botpass') || '',
             isLoggedIn: false,
-            isAutoconfirmed: true, // स्वतःस्थापित सदस्य स्थिति
+            isAutoconfirmed: false,
             isBot: false,
             isSysop: false,
-            editCount: 9467,
-            daysOld: 240,
-            groups: ['rollbacker', 'user', 'autoconfirmed'],
-            verified: true
+            editCount: 0,
+            daysOld: 0,
+            groups: [],
+            verified: false
         },
         botRunner: {
             isRunning: false,
@@ -716,7 +716,7 @@
         }
 
         const newSourceWikitext = (state.parsedData.lead || '') + clonedSections.map(s => s.fullText).join('');
-        const editSummary = `चर्चा समापन (${statusLabel}): ${closedTitles.join(', ')} ([[सदस्य:विक्रम प्रताप/DiscussionArchiver.js|चर्चा प्रबंधन टूल]])`;
+        const editSummary = `चर्चा समापन (${statusLabel}): ${closedTitles.join(', ')} ([[विकिपीडिया:चर्चा समापन उपकरण|चर्चा प्रबंधन उपकरण]])`;
 
         showPreviewModal({
             title: `चर्चा समापन पूर्वावलोकन (${closedTitles.length} अनुभाग)`,
@@ -789,8 +789,8 @@
         const newSourceWikitext = newLead + toRemain.map(s => s.fullText).join('');
 
         const actionPrefix = closeBeforeArchive ? 'चर्चा समापन एवं पुरालेखण: ' : 'पुरालेखण: ';
-        const sourceSummary = `${actionPrefix}${archivedTitles.length} चर्चा अनुभाग [[${targetArchive}]] में स्थानांतरित ([[सदस्य:विक्रम प्रताप/DiscussionArchiver.js|पुरालेखण टूल]])`;
-        const targetSummary = `${actionPrefix}[${state.currentPageTitle}]] से ${archivedTitles.length} चर्चा अनुभाग जोड़े गए ([[सदस्य:विक्रम प्रताप/DiscussionArchiver.js|पुरालेखण टूल]])`;
+        const sourceSummary = `${actionPrefix}${archivedTitles.length} चर्चा अनुभाग [[${targetArchive}]] में स्थानांतरित ([[विकिपीडिया:पुरालेखन|पुरालेखण उपकरण]])`;
+        const targetSummary = `${actionPrefix}[${state.currentPageTitle}]] से ${archivedTitles.length} चर्चा अनुभाग जोड़े गए ([[विकिपीडिया:पुरालेखन|पुरालेखण उपकरण]])`;
 
         showPreviewModal({
             title: `पुरालेख स्थानांतरण पूर्वावलोकन (${archivedTitles.length} अनुभाग)`,
@@ -1159,6 +1159,12 @@
             logMessage('सत्र समाप्त (लॉगआउट)।', 'info');
         });
 
+        // सदस्य बदलें बटन (अन्य सदस्यों हेतु)
+        const switchUserBtn = document.getElementById('btn-switch-user');
+        if (switchUserBtn) {
+            switchUserBtn.addEventListener('click', () => openLoginModal('ltab-verify'));
+        }
+
         // एकल फ़ाइल डाउनलोड बटन्स
         document.getElementById('btn-download-standalone').addEventListener('click', downloadStandaloneBundle);
         document.getElementById('btn-download-standalone-footer').addEventListener('click', downloadStandaloneBundle);
@@ -1462,8 +1468,31 @@
             document.getElementById('activity-log').innerHTML = '';
         });
 
-        // प्रारंभिक पृष्ठ लोड
-        loadPage('विकिपीडिया:चौपाल');
+        // प्रारंभिक URL पैरामीटर्स एवं सदस्य सत्यापन (?page=...&user=...)
+        const urlParams = new URLSearchParams(window.location.search);
+        const queryPage = urlParams.get('page');
+        const queryUser = urlParams.get('user');
+
+        if (queryUser) {
+            checkUserEligibility(queryUser).then(res => {
+                if (res && res.isAutoconfirmed) {
+                    state.auth = Object.assign(state.auth, res, { isLoggedIn: true });
+                    localStorage.setItem('da_username', res.username);
+                    updateAuthBadgeUI(state.auth);
+                }
+            });
+        } else if (state.auth.username) {
+            checkUserEligibility(state.auth.username).then(res => {
+                if (res && res.isAutoconfirmed) {
+                    state.auth = Object.assign(state.auth, res);
+                    updateAuthBadgeUI(state.auth);
+                }
+            });
+        }
+
+        const initialTarget = queryPage || 'विकिपीडिया:चौपाल';
+        document.getElementById('page-input').value = initialTarget;
+        loadPage(initialTarget);
     });
 
 })();

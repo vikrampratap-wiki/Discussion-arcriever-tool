@@ -29,7 +29,8 @@
                         <span class="user-avatar" id="user-avatar-initial">व</span>
                         <span id="logged-user-name">सदस्य</span>
                         <span id="logged-user-badge" class="badge-autoconfirmed">स्वतःस्थापित</span>
-                        <button id="btn-logout" class="btn btn-outline btn-xs" title="लॉगआउट" style="padding:1px 5px; font-size:10px;">✕</button>
+                        <button id="btn-switch-user" class="btn btn-outline btn-xs" title="सदस्य बदलें / स्विच करें" style="padding:2px 7px; font-size:11px;">👤 बदलें</button>
+                        <button id="btn-logout" class="btn btn-outline btn-xs" title="लॉगआउट" style="padding:2px 6px; font-size:11px;">✕</button>
                     </div>
                 </div>
                 <button id="btn-download-standalone" class="btn btn-download btn-sm" title="सभी कोड को एकल ऑफ़लाइन फ़ाइल में डाउनलोड करें">
@@ -568,6 +569,7 @@
                     <div class="preview-tabs">
                         <button class="preview-tab-btn active" data-ltab="ltab-login">🔑 लॉगिन / बॉट पासवर्ड</button>
                         <button class="preview-tab-btn" data-ltab="ltab-verify">🔍 पात्रता जाँचें</button>
+                        <button class="preview-tab-btn" data-ltab="ltab-gadget">⚡ विकिपीडिया गैजेट स्क्रिप्ट</button>
                         <button class="preview-tab-btn" data-ltab="ltab-rules">📜 न्यूनतम नियम</button>
                     </div>
 
@@ -615,6 +617,19 @@
                             </button>
                         </div>
                         <div id="verification-result-box" style="display: none;" class="card"></div>
+                    </div>
+
+                    <!-- गैजेट व स्क्रिप्ट टैब (अन्य सदस्यों हेतु) -->
+                    <div id="ltab-gadget" class="login-tab-pane" style="display: none; padding-top: 10px;">
+                        <p class="text-sm text-secondary" style="margin-bottom: 8px;">
+                            <strong>अन्य सदस्यों हेतु:</strong> इस टूल को सीधे हिन्दी विकिपीडिया के बाईं ओर 'उपकरण' मेनू में जोड़ने के लिए अपने <code>common.js</code> में निम्न पंक्ति जोड़ें:
+                        </p>
+                        <div class="code-editor" style="height: 90px; padding: 8px; margin-bottom: 10px; font-size: 11.5px;" readonly>
+// [[विकिपीडिया:चर्चा समापन एवं पुरालेखण उपकरण]]
+mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/DiscussionArchiver.js');</div>
+                        <p class="text-sm text-muted">
+                            कहाँ जोड़ें: <a href="https://hi.wikipedia.org/wiki/Special:MyPage/common.js" target="_blank" class="link-btn">Special:MyPage/common.js पर जाएँ ↗</a>
+                        </p>
                     </div>
 
                     <!-- नियम टैब -->

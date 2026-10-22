@@ -102,18 +102,46 @@ python3 server.py --port 8080
 
 ---
 
+## 👥 अन्य सदस्यों द्वारा उपयोग (Multi-User Community Usage)
+
+यह उपकरण केवल एक सदस्य के लिए सीमित नहीं है, बल्कि **हिन्दी विकिपीडिया का कोई भी स्वतः स्थापित सदस्य (Autoconfirmed User) या प्रबंधक** इसे अपने खाते से आसानी से उपयोग कर सकता है:
+
+### 1. सीधे वेब लिंक द्वारा (Direct Web App)
+कोई भी सदस्य सीधे लाइव वेबसाइट पर जा सकता है:
+> 🔗 **https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/**
+
+- हेडर में **"🔐 विकिमेडिया लॉगिन / पात्रता"** पर क्लिक करके अपना सदस्य नाम दर्ज करें।
+- टूल तुरंत विकिपीडिया Action API से आपके खाते की स्वतः स्थापित स्थिति की पुष्टि कर देगा और आपके अधिकार सक्रिय हो जाएँगे।
+
+### 2. सीधे किसी चर्चा पृष्ठ को लोड करना (URL Parameters)
+किसी भी पृष्ठ अथवा सदस्य को सीधे लोड करने के लिए URL पैरामीटर्स का उपयोग करें:
+```text
+https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/?page=विकिपीडिया:चौपाल&user=आपका_सदस्य_नाम
+```
+
+### 3. विकिपीडिया में गैजेट / स्क्रिप्ट के रूप में जोड़ना (In-Wiki User Script)
+यदि आप चाहते हैं कि विकिपीडिया पर कोई भी वार्ता पृष्ठ खोलते ही बाईं ओर 'उपकरण' (Tools) मेनू में इस टूल की कड़ी दिखे, तो अपने विकिपीडिया खाते के [Special:MyPage/common.js](https://hi.wikipedia.org/wiki/Special:MyPage/common.js) में निम्नलिखित एक पंक्ति जोड़ें:
+```javascript
+// [[विकिपीडिया:चर्चा समापन एवं पुरालेखण उपकरण]]
+mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/DiscussionArchiver.js');
+```
+
+---
+
 ## 📂 फ़ाइल संरचना (Repository Structure)
 
 ```text
 hindi-wiki-discussion-archiver/
-├── index.html           # मुख्य वेब इंटरफ़ेस (UI संरचना एवं मोडल)
-├── style.css            # आधुनिक, उत्तरदायी CSS (लाइट एवं डार्क थीम समर्थन)
-├── app.js               # कोर एप्लिकेशन लॉजिक (MediaWiki API, पार्सर, पुरालेखक)
-├── server.py            # शून्य-निर्भरता लोकल HTTP सर्वर (Python 3)
-├── push_to_github.sh    # GitHub पर स्वतः गिट इनिशियलाइज़ एवं पुश करने का स्क्रिप्ट
-├── .gitignore           # गिट अनचाही फ़ाइलों की अनदेखी
-├── LICENSE              # MIT ओपन-सोर्स लाइसेंस
-└── README.md            # विस्तृत प्रलेखन (यह फ़ाइल)
+├── index.html                       # मुख्य वेब इंटरफ़ेस (UI संरचना एवं मोडल)
+├── style.css                        # आधुनिक, उत्तरदायी CSS (लाइट एवं डार्क थीम समर्थन)
+├── app.js                           # कोर एप्लिकेशन लॉजिक (MediaWiki API, बहु-सदस्यीय पार्सर)
+├── DiscussionArchiver.js            # विकिपीडिया उपयोगकर्ताओं हेतु इन-विकि लोडर स्क्रिप्ट
+├── DiscussionArchiver_Standalone.html # एकल आत्मनिर्भर ऑफ़लाइन HTML बंडल
+├── server.py                        # शून्य-निर्भरता लोकल HTTP सर्वर (Python 3)
+├── push_to_github.sh                # GitHub पर स्वतः गिट इनिशियलाइज़ एवं पुश करने का स्क्रिप्ट
+├── .gitignore                       # गिट अनचाही फ़ाइलों की अनदेखी
+├── LICENSE                          # MIT ओपन-सोर्स लाइसेंस
+└── README.md                        # विस्तृत प्रलेखन (यह फ़ाइल)
 ```
 
 ---
