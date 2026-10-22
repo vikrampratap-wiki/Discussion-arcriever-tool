@@ -53,11 +53,7 @@
 1. अपने GitHub खाते में एक नया रिपॉजिटरी बनाएँ (उदा: `hindi-wiki-discussion-archiver`)।
 2. इस डायरेक्टरी की सभी फ़ाइलों को रिपॉजिटरी में पुश (Push) करें:
    ```bash
-   git init
-   git add .
-   git commit -m "Initial commit: Hindi Wikipedia Discussion Archiver Web Tool"
-   git branch -M main
-   git remote add origin https://github.com/<आपका-यूज़रनेम>/hindi-wiki-discussion-archiver.git
+   git remote add origin https://github.com/FOLLOWME5108/Discussion-arcriever.git
    git push -u origin main
    ```
    *(या आप डायरेक्टरी में दिए गए `./push_to_github.sh` स्क्रिप्ट को भी चला सकते हैं!)*
@@ -69,7 +65,7 @@
 
 4. 1-2 मिनट में आपकी वेबसाइट लाइव हो जाएगी:
    ```
-   https://<आपका-यूज़रनेम>.github.io/hindi-wiki-discussion-archiver/
+   https://followme5108.github.io/Discussion-arcriever/
    ```
 
 ---

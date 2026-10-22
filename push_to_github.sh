@@ -70,12 +70,19 @@ if command -v gh &> /dev/null; then
     fi
 fi
 
-# विकल्प 2: मैन्युअल रिमोट यूआरएल
+# रिमोट यूआरएल
+DEFAULT_REMOTE="https://github.com/FOLLOWME5108/Discussion-arcriever.git"
+
 echo ""
-echo -e "${YELLOW}कृपया अपने GitHub रिपॉजिटरी का URL प्रदान करें।${NC}"
-echo -e "उदाहरण: ${BLUE}https://github.com/<आपका-यूज़रनेम>/hindi-wiki-discussion-archiver.git${NC}"
-echo ""
-read -p "GitHub Repository URL (खाली छोड़ने पर बाहर निकल जाएगा): " remote_url
+echo -e "${YELLOW}लक्षित GitHub रिपॉजिटरी:${NC} ${BLUE}${DEFAULT_REMOTE}${NC}"
+read -p "क्या आप इसी रिपॉजिटरी में पुश करना चाहते हैं? (Y/n): " confirm_remote
+confirm_remote=${confirm_remote:-Y}
+
+if [[ "$confirm_remote" =~ ^[Yy]$ ]]; then
+    remote_url="$DEFAULT_REMOTE"
+else
+    read -p "वैकल्पिक GitHub Repository URL दर्ज करें: " remote_url
+fi
 
 if [ -n "$remote_url" ]; then
     # मौजूदा रिमोट हटाकर नया जोड़ें
