@@ -1134,9 +1134,23 @@ body {
                         <li>विकिपीडिया पर किसी भी चर्चा पृष्ठ (उदा: <strong>चौपाल</strong>) पर जाएँ और शीर्ष पर स्थित <strong>`📚 चर्चा समापन`</strong> टैब पर क्लिक करें।</li>
                         <li>यह आपके वास्तविक विकिपीडिया खाते के डिजिटल सत्र टोकन के साथ उपकरण को <strong>स्वतः सुरक्षित रूप से अनलॉक</strong> कर देगा!</li>
                     </ol>
-                    <a href="https://hi.wikipedia.org/wiki/विकिपीडिया:चौपाल" target="_blank" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 600;">
-                        🚀 विकिपीडिया:चौपाल पर जाएँ (शीर्ष '📚 चर्चा समापन' टैब देखें) ↗
-                    </a>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;">
+                        <a href="https://hi.wikipedia.org/wiki/विकिपीडिया:चौपाल" target="_blank" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 600;">
+                            🚀 विकिपीडिया:चौपाल पर जाएँ (शीर्ष '📚 चर्चा समापन' बटन देखें) ↗
+                        </a>
+                    </div>
+
+                    <div style="padding: 12px; background: var(--bg-subtle); border: 1px dashed var(--border-color); border-radius: 6px;">
+                        <div style="font-weight: 700; font-size: 13px; color: var(--text-primary); margin-bottom: 4px;">
+                            ⭐ त्वरित विकल्प: 1-क्लिक बुकमार्कलेट (One-Click Bookmarklet):
+                        </div>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.5;">
+                            यदि विकिपीडिया कैश के कारण बटन दिखने में समय लगे, तो नीचे दिए गए नीले बटन को अपने ब्राउज़र के <strong>Bookmarks Bar</strong> पर खींचें (Drag & Drop करें)। विकिपीडिया पर किसी भी चर्चा पृष्ठ पर रहते हुए उस बुकमार्क को दबाते ही टूल आपके खाते से स्वतः अनलॉक होकर खुल जाएगा:
+                        </p>
+                        <a href="javascript:(function(){var u=mw.config.get('wgUserName');if(!u){alert('कृपया पहले विकिपीडिया पर लॉगिन करें!');return;}var p=mw.config.get('wgPageName')||'विकिपीडिया:चौपाल';var ts=Date.now();var t=btoa(unescape(encodeURIComponent(u+':'+ts)));window.open('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/?page='+encodeURIComponent(p)+'&user='+encodeURIComponent(u)+'&token='+encodeURIComponent(t)+'&ts='+ts,'_blank');})();" class="btn btn-secondary btn-xs" style="font-weight: 700; border: 1px solid #36c; color: #36c;" onclick="alert('इस बटन को अपने ब्राउज़र की Bookmarks Bar में ड्रैग (खींचें) करें, या राइट-क्लिक करके Add to Bookmarks करें!'); return false;">
+                            ⭐ [📚 चर्चा समापन टूल] (बुकमार्क बार में खींचें)
+                        </a>
+                    </div>
                 </div>
 
                 <!-- विकल्प 2: विकिमीडिया OAuth 2.0 (पंजीकृत कंज्यूमर हेतु) -->
