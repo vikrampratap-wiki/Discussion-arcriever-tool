@@ -320,6 +320,28 @@
     // 4. विकिपीडिया Action API इंटरैक्शन एवं पात्रता सत्यापन
     // =========================================================================
 
+    // पुनः प्रयास सहित fetch (Retry-capable fetch wrapper)
+    async function fetchWithRetry(url, options = {}, maxRetries = 2) {
+        let lastError;
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+                const resp = await fetch(url, options);
+                if (!resp.ok) {
+                    throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+                }
+                return resp;
+            } catch (err) {
+                lastError = err;
+                if (attempt < maxRetries) {
+                    const waitMs = 800 * (attempt + 1);
+                    logMessage(`नेटवर्क त्रुटि — ${waitMs / 1000}s बाद पुनः प्रयास (${attempt + 1}/${maxRetries})...`, 'warning');
+                    await new Promise(r => setTimeout(r, waitMs));
+                }
+            }
+        }
+        throw new Error(`नेटवर्क त्रुटि: विकिमीडिया सर्वर से संपर्क नहीं हो सका। कृपया अपना इंटरनेट कनेक्शन जाँचें। (${lastError ? lastError.message : 'Unknown error'})`);
+    }
+
     async function fetchWikipediaAPI(params) {
         params.format = 'json';
         params.origin = '*'; // CORS support
@@ -329,10 +351,7 @@
             .join('&');
         const url = `${WIKI_API}?${queryStr}`;
 
-        const resp = await fetch(url);
-        if (!resp.ok) {
-            throw new Error(`HTTP Error ${resp.status}: ${resp.statusText}`);
-        }
+        const resp = await fetchWithRetry(url);
         return await resp.json();
     }
 
@@ -343,8 +362,7 @@
         const metaUrl = `https://meta.wikimedia.org/w/api.php?action=query&meta=globaluserinfo&guiuser=${encodeURIComponent(cleanName)}&guiprop=groups|rights|merged|editcount&format=json&origin=*`;
 
         try {
-            const resp = await fetch(metaUrl);
-            if (!resp.ok) return null;
+            const resp = await fetchWithRetry(metaUrl, {}, 1);
             const data = await resp.json();
             const gui = data.query && data.query.globaluserinfo ? data.query.globaluserinfo : null;
             if (!gui || gui.missing !== undefined) return null;
@@ -361,6 +379,74 @@
         } catch (e) {
             console.warn('CentralAuth fetch error:', e);
             return null;
+        }
+    }
+
+    // सत्यापन कार्ड रेंडर (Verification Profile Card)
+    function renderVerificationCard(res, resBox) {
+        if (!resBox) resBox = document.getElementById('verification-result-box');
+        if (!resBox) return;
+
+        const autoconfirmedTag = res.isAutoconfirmed
+            ? '<span class="badge-autoconfirmed">✅ स्वतः स्थापित (पात्र)</span>'
+            : '<span class="badge-restricted">⚠️ अपात्र (न्यूनतम 4 दिन पुराना + 10 संपादन आवश्यक)</span>';
+        const globalEdits = res.central ? res.central.globalEditCount.toLocaleString('hi-IN') : '—';
+        const homeWiki = res.central && res.central.home ? res.central.home : 'hiwiki';
+        const sulLink = 'https://meta.wikimedia.org/wiki/Special:CentralAuth/' + encodeURIComponent(res.username);
+
+        resBox.style.display = 'block';
+        resBox.innerHTML = `
+            <div class="central-auth-card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="user-avatar" style="width:32px; height:32px; font-size:14px;">${escapeHtml(res.username[0] || 'व')}</span>
+                        <div>
+                            <strong style="font-size:15px;">${escapeHtml(res.username)}</strong>
+                            ${res.central ? '<span class="badge-sul" style="margin-left:5px;">🌐 CentralAuth SUL</span>' : ''}
+                        </div>
+                    </div>
+                    ${autoconfirmedTag}
+                </div>
+                <div class="metric-grid">
+                    <div class="metric-box">
+                        <div class="metric-val">${res.editCount.toLocaleString('hi-IN')}</div>
+                        <div class="metric-lbl">🇮🇳 हिन्दी संपादन</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-val">${globalEdits}</div>
+                        <div class="metric-lbl">🌍 वैश्विक SUL</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-val">${homeWiki}</div>
+                        <div class="metric-lbl">🏠 गृह विकि</div>
+                    </div>
+                </div>
+                <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center; font-size:12px; flex-wrap:wrap; gap:8px;">
+                    <span class="text-muted">खाता आयु: <strong>${res.daysOld} दिन</strong> (${res.registration ? res.registration.split('T')[0] : '—'})</span>
+                    <a href="${sulLink}" target="_blank" class="link-btn">सेंट्रलऑथ प्रोफ़ाइल ↗</a>
+                </div>
+                <div style="margin-top:12px; padding-top:10px; border-top:1px dashed var(--border-color); display:flex; justify-content:flex-end; gap:8px;">
+                    <button type="button" id="btn-use-this-user" class="btn btn-primary btn-sm">
+                        ✓ इस खाते से उपकरण प्रारंभ करें
+                    </button>
+                </div>
+            </div>`;
+
+        if (res.isAutoconfirmed) {
+            state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
+            updateAuthBadgeUI(state.auth);
+            localStorage.setItem('da_username', res.username);
+        }
+
+        const useBtn = document.getElementById('btn-use-this-user');
+        if (useBtn) {
+            useBtn.addEventListener('click', () => {
+                state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
+                updateAuthBadgeUI(state.auth);
+                localStorage.setItem('da_username', res.username);
+                document.getElementById('login-modal').style.display = 'none';
+                logMessage('विकिमीडिया लॉगिन: <b>' + escapeHtml(res.username) + '</b> सक्रिय।', 'success');
+            });
         }
     }
 
@@ -1239,68 +1325,8 @@
                     return;
                 }
 
-                const autoconfirmedTag = res.isAutoconfirmed
-                    ? '<span class="badge-autoconfirmed">✅ स्वतः स्थापित (पात्र)</span>'
-                    : '<span class="badge-restricted">⚠️ न्यूनतम पात्रता शेष (4 दिन + 10 संपादन)</span>';
-
-                const globalEdits = res.central ? res.central.globalEditCount.toLocaleString('hi-IN') : '—';
-                const homeWiki = res.central && res.central.home ? res.central.home : 'hiwiki';
-                const sulLink = `https://meta.wikimedia.org/wiki/Special:CentralAuth/${encodeURIComponent(res.username)}`;
-
-                resBox.innerHTML = `
-                    <div class="central-auth-card">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <span class="user-avatar" style="width:32px; height:32px; font-size:14px;">${escapeHtml(res.username[0] || 'व')}</span>
-                                <div>
-                                    <strong style="font-size:15px;">${escapeHtml(res.username)}</strong>
-                                    ${res.central ? '<span class="badge-sul" style="margin-left:5px;">🌐 CentralAuth SUL</span>' : ''}
-                                </div>
-                            </div>
-                            ${autoconfirmedTag}
-                        </div>
-                        <div class="metric-grid">
-                            <div class="metric-box">
-                                <div class="metric-val">${res.editCount.toLocaleString('hi-IN')}</div>
-                                <div class="metric-lbl">🇮🇳 हिन्दी विकि संपादन</div>
-                            </div>
-                            <div class="metric-box">
-                                <div class="metric-val">${globalEdits}</div>
-                                <div class="metric-lbl">🌍 वैश्विक संपादन (SUL)</div>
-                            </div>
-                            <div class="metric-box">
-                                <div class="metric-val">${homeWiki}</div>
-                                <div class="metric-lbl">🏠 गृह विकि (Home)</div>
-                            </div>
-                        </div>
-                        <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center; font-size:12px; flex-wrap:wrap; gap:8px;">
-                            <span class="text-muted">खाता आयु: <strong>${res.daysOld} दिन</strong> (${res.registration ? res.registration.split('T')[0] : '—'})</span>
-                            <a href="${sulLink}" target="_blank" class="link-btn">सेंट्रलऑथ प्रोफ़ाइल (Meta) ↗</a>
-                        </div>
-                        <div style="margin-top:12px; padding-top:10px; border-top:1px dashed var(--border-color); display:flex; justify-content:flex-end;">
-                            <button type="button" id="btn-use-this-user" class="btn btn-primary btn-sm">
-                                ✓ इस खाते से उपकरण प्रारंभ करें
-                            </button>
-                        </div>
-                    </div>
-                `;
-
-                const useBtn = document.getElementById('btn-use-this-user');
-                if (useBtn) {
-                    useBtn.addEventListener('click', () => {
-                        state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
-                        updateAuthBadgeUI(state.auth);
-                        localStorage.setItem('da_username', res.username);
-                        document.getElementById('login-modal').style.display = 'none';
-                        logMessage(`विकिमीडिया सेंट्रल लॉगिन: <b>${escapeHtml(res.username)}</b> सफलतापूर्वक सक्रिय हुआ।`, 'success');
-                    });
-                }
-
-                if (res.isAutoconfirmed) {
-                    state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
-                    updateAuthBadgeUI(state.auth);
-                    localStorage.setItem('da_username', res.username);
-                }
+                renderVerificationCard(res, resBox);
+                logMessage(`विकिमीडिया सदस्य <b>${escapeHtml(res.username)}</b> सत्यापित।`, 'success');
             });
         }
 
@@ -1510,12 +1536,6 @@
                 });
             });
         }
-
-        // 10. एकल फ़ाइल डाउनलोड Butons
-        const dlBtn = document.getElementById('btn-download-standalone');
-        if (dlBtn) dlBtn.addEventListener('click', downloadStandaloneBundle);
-        const dlFooterBtn = document.getElementById('btn-download-standalone-footer');
-        if (dlFooterBtn) dlFooterBtn.addEventListener('click', downloadStandaloneBundle);
 
         // 11. बॉट ऑटोमेशन Butons
         const scanBotBtn = document.getElementById('btn-bot-scan');

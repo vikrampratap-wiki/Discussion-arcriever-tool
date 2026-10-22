@@ -33,9 +33,6 @@
                         <button id="btn-logout" class="btn btn-outline btn-xs" title="लॉगआउट" style="padding:2px 6px; font-size:11px;">✕</button>
                     </div>
                 </div>
-                <button id="btn-download-standalone" class="btn btn-download btn-sm" title="सभी कोड को एकल ऑफ़लाइन फ़ाइल में डाउनलोड करें">
-                    📥 एकल फ़ाइल
-                </button>
                 <button id="theme-toggle-btn" class="btn btn-secondary btn-sm" title="डार्क/लाइट मोड बदलें">🌓</button>
                 <a href="https://github.com/vikrampratap-wiki/Discussion-arcriever-tool" target="_blank" class="btn btn-outline btn-sm" title="GitHub रिपॉजिटरी">GitHub ↗</a>
             </div>
@@ -559,27 +556,47 @@
                     </div>
 
                     <div class="preview-tabs">
-                        <button class="preview-tab-btn active" data-ltab="ltab-verify">🌐 सेंट्रल खाता सत्यापन (CentralAuth)</button>
-                        <button class="preview-tab-btn" data-ltab="ltab-gadget">⚡ विकिपीडिया गैजेट (common.js)</button>
+                        <button class="preview-tab-btn active" data-ltab="ltab-verify">🌐 विकिमीडिया लॉगिन एवं सत्यापन (CentralAuth)</button>
+                        <button class="preview-tab-btn" data-ltab="ltab-gadget">⚡ विकिपीडिया गैजेट (1-क्लिक स्वतः लॉगिन)</button>
                     </div>
 
                     <!-- सेंट्रलऑथ प्रोफ़ाइल व सत्यापन टैब -->
                     <div id="ltab-verify" class="login-tab-pane active" style="padding-top: 10px;">
-                        <label for="verify-username-input" class="form-label">विकिमीडिया सदस्य नाम दर्ज करें:</label>
-                        <div class="input-with-button" style="margin-bottom: 10px;">
-                            <input type="text" id="verify-username-input" class="form-control" placeholder="उदा: विक्रम प्रताप अथवा Vikram pratap" value="" />
-                            <button id="btn-check-user-eligibility" class="btn btn-wikimedia" style="white-space: nowrap;">
-                                🌐 विकिमीडिया से सत्यापित करें
-                            </button>
+                        <!-- चरण 1: विकिमीडिया लॉगिन -->
+                        <div class="wiki-auth-step-box" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:6px; padding:12px; margin-bottom:12px;">
+                            <div style="font-weight:600; font-size:13.5px; margin-bottom:6px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+                                <span>1️⃣</span> आधिकारिक विकिमीडिया लॉगिन:
+                            </div>
+                            <p style="margin:0 0 10px 0; font-size:12px; color:var(--text-secondary); line-height:1.5;">
+                                विकिपीडिया पर चर्चा समापन अथवा पुरालेखन करने हेतु विकिपीडिया पर आपका लॉगिन होना अनिवार्य है।
+                            </p>
+                            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                <a href="https://hi.wikipedia.org/w/index.php?title=Special:UserLogin&returnto=Special:MyPage" target="_blank" id="btn-goto-wiki-login" class="btn btn-wikimedia btn-sm" style="text-decoration:none;">
+                                    🚀 विकिपीडिया लॉगिन पृष्ठ खोलें ↗
+                                </a>
+                                <a href="https://hi.wikipedia.org/wiki/Special:MyPage" target="_blank" class="link-btn" title="देखें कि वर्तमान में विकिपीडिया पर कौन सा खाता सक्रिय है">
+                                    🔍 सक्रिय विकिपीडिया खाता जाँचें (Special:MyPage) ↗
+                                </a>
+                            </div>
                         </div>
 
-                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
-                            <a href="https://hi.wikipedia.org/wiki/Special:UserLogin" target="_blank" class="link-btn">
-                                🔗 विकिपीडिया पर आधिकारिक लॉगिन ↗
-                            </a>
-                            <a href="https://meta.wikimedia.org/w/index.php?title=Special:UserLogin" target="_blank" class="link-btn">
-                                🌍 मेटा-विकि सेंट्रल लॉगिन ↗
-                            </a>
+                        <!-- चरण 2: सदस्य नाम व पात्रता सत्यापन -->
+                        <div class="wiki-auth-step-box" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:6px; padding:12px; margin-bottom:10px;">
+                            <div style="font-weight:600; font-size:13.5px; margin-bottom:6px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+                                <span>2️⃣</span> सदस्य नाम एवं पात्रता (CentralAuth SUL) सत्यापन:
+                            </div>
+                            <p style="margin:0 0 8px 0; font-size:12px; color:var(--text-secondary); line-height:1.4;">
+                                विकिमीडिया पर लॉगिन के बाद अपना सदस्य नाम दर्ज करें ताकि टूल आपकी पात्रता (स्वतःस्थापित सदस्य) की पुष्टि कर सके:
+                            </p>
+                            <div class="input-with-button" style="margin-bottom: 6px;">
+                                <input type="text" id="verify-username-input" class="form-control" placeholder="उदा: विक्रम प्रताप अथवा Vikram pratap" value="" />
+                                <button id="btn-check-user-eligibility" class="btn btn-primary" style="white-space: nowrap;">
+                                    ✓ खाता सत्यापित करें
+                                </button>
+                            </div>
+                            <p class="text-sm text-muted" style="margin:4px 0 0 0; font-size:11px; line-height:1.4;">
+                                🔒 <strong>सुरक्षा नियम:</strong> विकिपीडिया की आंतरिक प्रणाली के कारण संपादन केवल उसी सदस्य के नाम से सुरक्षित होगा जो आपके ब्राउज़र में वास्तव में विकिपीडिया पर लॉगिन है।
+                            </p>
                         </div>
 
                         <div id="verification-result-box" style="display: none;"></div>
@@ -617,11 +634,6 @@ mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/Di
     </main>
 
     <footer class="app-footer container">
-        <div style="margin-bottom: 10px;">
-            <button id="btn-download-standalone-footer" class="btn btn-download btn-sm">
-                📥 एकल HTML फ़ाइल डाउनलोड करें (ऑफ़लाइन उपयोग हेतु All-in-One)
-            </button>
-        </div>
         <p>
             हिन्दी विकिपीडिया चर्चा प्रबंधन एवं पुरालेखण उपकरण | लेखक: 
             <a href="https://hi.wikipedia.org/wiki/सदस्य:विक्रम_प्रताप" target="_blank">सदस्य:विक्रम प्रताप</a> | 
