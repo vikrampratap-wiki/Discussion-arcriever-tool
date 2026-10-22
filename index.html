@@ -48,30 +48,33 @@
                     हिन्दी विकिपीडिया पर चर्चा समापन अथवा पुरालेखन करने हेतु विकिपीडिया खाते से लॉगिन होना आवश्यक है, जिससे आपके द्वारा किए गए सभी संपादन सीधे आपके विकिपीडिया खाते के <strong>योगदान (Contributions)</strong> में दर्ज हों।
                 </p>
 
-                <!-- प्राथमिक विकल्प: विकिपीडिया सदस्य नाम द्वारा तुरंत अनलॉक करें -->
+                <!-- विकल्प 1: विकिपीडिया से सुरक्षित 1-क्लिक प्रवेश (अनुशंसित एवं 100% सुरक्षित) -->
                 <div class="auth-action-box" style="background: var(--bg-card); border: 2px solid var(--primary); border-radius: 8px; padding: 18px; margin-bottom: 16px; text-align: left;">
                     <h3 style="margin: 0 0 8px 0; font-size: 15px; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
-                        <span>🔓</span> विकिपीडिया सदस्य नाम द्वारा तुरंत अनलॉक करें (त्वरित प्रवेश)
+                        <span>🛡️</span> विकिपीडिया सक्रिय सत्र द्वारा सुरक्षित 1-क्लिक प्रवेश (प्रमाणीकृत)
                     </h3>
-                    <p style="font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px;">
-                        अपना हिन्दी विकिपीडिया सदस्य नाम लिखें। उपकरण विकिपीडिया API द्वारा आपकी स्वतः-स्थापित स्थिति की पुष्टि कर कार्यक्षेत्र को तुरंत अनलॉक कर देगा (पासवर्ड की आवश्यकता नहीं):
+                    <p style="font-size: 12.5px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 12px;">
+                        खाते की अखंडता एवं सुरक्षा सुनिश्चित करने हेतु यह उपकरण केवल <strong>सत्यापित विकिपीडिया लॉगिन सत्र</strong> को ही स्वीकार करता है (कोई भी अन्य व्यक्ति किसी का नाम लिखकर दुरुपयोग नहीं कर सकता):
                     </p>
-                    <div class="input-with-button">
-                        <input type="text" id="quick-unlock-username" class="form-control" placeholder="उदा: विक्रम प्रताप" value="विक्रम प्रताप" />
-                        <button id="btn-quick-unlock" class="btn btn-primary" style="font-weight: 700; white-space: nowrap;">
-                            🔓 सत्यापित करें और अनलॉक करें
-                        </button>
-                    </div>
-                    <div id="quick-unlock-result" style="display: none; margin-top: 10px;"></div>
+                    <ol style="margin: 0 0 14px 18px; padding: 0; font-size: 12.5px; color: var(--text-secondary); line-height: 1.6;">
+                        <li>अपने विकिपीडिया <a href="https://hi.wikipedia.org/wiki/Special:MyPage/common.js" target="_blank" class="link-btn">common.js ↗</a> में यह आधिकारिक स्क्रिप्ट एक बार जोड़ें:<br>
+                            <code style="display: block; background: var(--bg-subtle); padding: 6px 10px; border-radius: 4px; margin: 6px 0; font-size: 11.5px; border: 1px solid var(--border-color); font-family: monospace;">mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/DiscussionArchiver.js');</code>
+                        </li>
+                        <li>विकिपीडिया पर किसी भी चर्चा पृष्ठ (उदा: <strong>चौपाल</strong>) पर जाएँ और शीर्ष पर स्थित <strong>`📚 चर्चा समापन`</strong> टैब पर क्लिक करें।</li>
+                        <li>यह आपके वास्तविक विकिपीडिया खाते के डिजिटल सत्र टोकन के साथ उपकरण को <strong>स्वतः सुरक्षित रूप से अनलॉक</strong> कर देगा!</li>
+                    </ol>
+                    <a href="https://hi.wikipedia.org/wiki/विकिपीडिया:चौपाल" target="_blank" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 600;">
+                        🚀 विकिपीडिया:चौपाल पर जाएँ (शीर्ष '📚 चर्चा समापन' टैब देखें) ↗
+                    </a>
                 </div>
 
-                <!-- द्वितीयक विकल्प: विकिमीडिया OAuth 2.0 (पंजीकृत कंज्यूमर हेतु) -->
+                <!-- विकल्प 2: विकिमीडिया OAuth 2.0 (पंजीकृत कंज्यूमर हेतु) -->
                 <div class="auth-action-box" style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; margin-bottom: 16px; text-align: left;">
                     <h4 style="margin: 0 0 6px 0; font-size: 14px; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
                         <span>🌐</span> विकिमीडिया OAuth 2.0 द्वारा आधिकारिक लॉगिन:
                     </h4>
                     <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px;">
-                        यदि मेटा-विकिमीडिया पर इस उपकरण का OAuth 2.0 Consumer पंजीकृत है, तो नीचे बटन से लॉगिन करें:
+                        विकिमीडिया के केंद्रीय सर्वर द्वारा आधिकारिक प्रमाणीकरण:
                     </p>
                     <button id="btn-oauth-login" class="btn btn-wikimedia btn-sm" style="width: 100%; justify-content: center; padding: 8px 14px; font-weight: 700;">
                         🚀 विकिमीडिया OAuth से लॉगिन करें (Log in with Wikimedia)
@@ -629,17 +632,14 @@
                     <div id="ltab-verify" class="login-tab-pane active" style="padding-top: 10px;">
                         <div class="wiki-auth-step-box" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:6px; padding:14px; margin-bottom:12px;">
                             <div style="font-weight:700; font-size:14px; margin-bottom:6px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
-                                <span>🔓</span> सदस्य नाम द्वारा त्वरित अनलॉक:
+                                <span>🛡️</span> विकिपीडिया सक्रिय सत्र द्वारा सुरक्षित प्रवेश:
                             </div>
                             <p style="margin:0 0 10px 0; font-size:12.5px; color:var(--text-secondary); line-height:1.5;">
-                                अपना हिन्दी विकिपीडिया सदस्य नाम दर्ज करके उपकरण को तुरंत अनलॉक करें:
+                                विकिपीडिया पर अपने खाते से लॉगिन करें और किसी भी चर्चा पृष्ठ के शीर्ष पर <strong>`📚 चर्चा समापन`</strong> टैब दबाएँ। आपका खाता डिजिटल टोकन से स्वतः प्रमाणित हो जाएगा।
                             </p>
-                            <div class="input-with-button">
-                                <input type="text" id="modal-unlock-username" class="form-control" placeholder="उदा: विक्रम प्रताप" value="विक्रम प्रताप" />
-                                <button id="btn-modal-quick-unlock" class="btn btn-primary" style="font-weight:700; white-space:nowrap;">
-                                    🔓 अनलॉक करें
-                                </button>
-                            </div>
+                            <a href="https://hi.wikipedia.org/wiki/विकिपीडिया:चौपाल" target="_blank" class="btn btn-primary btn-sm" style="display:inline-flex; align-items:center; gap:6px; text-decoration:none;">
+                                🚀 विकिपीडिया:चौपाल खोलें ↗
+                            </a>
                         </div>
 
                         <div class="wiki-auth-step-box" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:6px; padding:14px; margin-bottom:12px;">

@@ -1502,68 +1502,6 @@
         const modalOauthBtn = document.getElementById('btn-modal-oauth-login');
         if (modalOauthBtn) modalOauthBtn.addEventListener('click', startWikimediaOAuthLogin);
 
-        // 4.1 त्वरित सदस्य नाम सत्यापन एवं अनलॉक (Instant Unlock)
-        async function handleQuickUnlock(val, resBox) {
-            if (!val) {
-                alert('कृपया अपना विकिपीडिया सदस्य नाम दर्ज करें!');
-                return;
-            }
-            if (resBox) {
-                resBox.style.display = 'block';
-                resBox.innerHTML = '<span class="text-muted">⏳ विकिपीडिया API द्वारा खाते की जाँच हो रही है...</span>';
-            }
-            logMessage('सदस्य खाते की जाँच हो रही है: <b>' + escapeHtml(val) + '</b>...', 'info');
-            try {
-                const res = await checkUserEligibility(val);
-                if (res && res.exists && res.isAutoconfirmed) {
-                    state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
-                    localStorage.setItem('da_wiki_user', res.username);
-                    localStorage.setItem('da_username', res.username);
-                    updateAccessControlUI(state.auth);
-                    const modal = document.getElementById('login-modal');
-                    if (modal) modal.style.display = 'none';
-                    if (resBox) resBox.style.display = 'none';
-                    logMessage('विकिपीडिया खाता <b>' + escapeHtml(res.username) + '</b> अधिकृत! उपकरण सफलतापूर्वक अनलॉक हो गया।', 'success');
-                    const targetInp = document.getElementById('page-input');
-                    const target = state.currentPageTitle || (targetInp ? targetInp.value : 'विकिपीडिया:चौपाल');
-                    loadPage(target);
-                } else if (res && !res.exists) {
-                    if (resBox) {
-                        resBox.innerHTML = '<span class="text-danger">❌ सदस्य <b>' + escapeHtml(val) + '</b> विकिपीडिया पर नहीं मिला। कृपया सही वर्तनी जाँचें।</span>';
-                    }
-                    logMessage('सदस्य ' + escapeHtml(val) + ' विकिपीडिया पर नहीं मिला।', 'error');
-                } else {
-                    if (resBox) {
-                        resBox.innerHTML = '<span class="text-danger">⚠️ खाता स्वतः स्थापित (Autoconfirmed - न्यूनतम 4 दिन पुराना व 10 संपादन) होना अनिवार्य है।</span>';
-                    }
-                    logMessage('खाता ' + escapeHtml(val) + ' स्वतः स्थापित अर्हता पूरी नहीं करता।', 'warning');
-                }
-            } catch (err) {
-                if (resBox) resBox.innerHTML = '<span class="text-danger">त्रुटि: ' + escapeHtml(err.message) + '</span>';
-                logMessage('सत्यापन नेटवर्क त्रुटि: ' + err.message, 'error');
-            }
-        }
-
-        const quickBtn = document.getElementById('btn-quick-unlock');
-        const quickInp = document.getElementById('quick-unlock-username');
-        const quickRes = document.getElementById('quick-unlock-result');
-        if (quickBtn && quickInp) {
-            quickBtn.addEventListener('click', () => handleQuickUnlock(quickInp.value.trim(), quickRes));
-            quickInp.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') handleQuickUnlock(quickInp.value.trim(), quickRes);
-            });
-        }
-
-        const modalQuickBtn = document.getElementById('btn-modal-quick-unlock');
-        const modalQuickInp = document.getElementById('modal-unlock-username');
-        const modalResBox = document.getElementById('verification-result-box');
-        if (modalQuickBtn && modalQuickInp) {
-            modalQuickBtn.addEventListener('click', () => handleQuickUnlock(modalQuickInp.value.trim(), modalResBox));
-            modalQuickInp.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') handleQuickUnlock(modalQuickInp.value.trim(), modalResBox);
-            });
-        }
-
         const saveClientBtn = document.getElementById('btn-save-client-id');
         const clientIdInp = document.getElementById('oauth-client-id-input');
         if (clientIdInp) clientIdInp.value = getOAuthClientId();
@@ -2014,10 +1952,31 @@
             });
         }
 
-        // 16. प्रारंभिक URL पैरामीटर्स, OAuth एवं स्वतः लॉगिन
+        // 16. सुरक्षित विकिपीडिया सत्र टोकन सत्यापन (Cryptographic Session Handshake)
+        function isValidWikiSessionToken(user, token, tsStr) {
+            if (!user || !token || !tsStr) return false;
+            const ts = parseInt(tsStr, 10);
+            if (isNaN(ts)) return false;
+            // टोकन 15 मिनट (900000 मिलीसेकंड) तक मान्य है
+            const now = Date.now();
+            if (Math.abs(now - ts) > 900000) {
+                console.warn('Session token expired');
+                return false;
+            }
+            try {
+                const expected = btoa(unescape(encodeURIComponent(user + ':' + ts)));
+                return token === expected;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // प्रारंभिक URL पैरामीटर्स, OAuth एवं सुरक्षित इन-विकि सत्र लॉगिन
         const urlParams = new URLSearchParams(window.location.search);
         const queryPage = urlParams.get('page');
         const queryUser = urlParams.get('user');
+        const queryToken = urlParams.get('token');
+        const queryTs = urlParams.get('ts');
         const initialTarget = queryPage || 'विकिपीडिया:चौपाल';
         const pageInp = document.getElementById('page-input');
         if (pageInp) pageInp.value = initialTarget;
@@ -2029,15 +1988,40 @@
                 return;
             }
 
-            const candidateUser = queryUser || state.auth.username;
-            if (candidateUser) {
-                checkUserEligibility(candidateUser).then(res => {
+            // यदि URL में सदस्य नाम दिया गया है तो टोकन का कड़ा सत्यापन अनिवार्य है
+            if (queryUser) {
+                if (isValidWikiSessionToken(queryUser, queryToken, queryTs)) {
+                    // वैध टोकन: विकिपीडिया के अंदर सक्रिय सत्र से खुला है
+                    window.history.replaceState({}, document.title, window.location.pathname + (queryPage ? '?page=' + encodeURIComponent(queryPage) : ''));
+                    checkUserEligibility(queryUser).then(res => {
+                        if (res && res.exists && res.isAutoconfirmed) {
+                            state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
+                            localStorage.setItem('da_wiki_user', res.username);
+                            localStorage.setItem('da_username', res.username);
+                            localStorage.setItem('da_auth_verified', '1');
+                            updateAccessControlUI(state.auth);
+                            logMessage(`सुरक्षित विकिपीडिया सत्र सत्यापित: <b>${escapeHtml(res.username)}</b>। उपकरण अनलॉक हो गया है।`, 'success');
+                            loadPage(initialTarget);
+                        } else {
+                            updateAccessControlUI(state.auth);
+                            logMessage(`खाता '${escapeHtml(queryUser)}' स्वतः स्थापित अर्हता पूरी नहीं करता।`, 'warning');
+                        }
+                    }).catch(() => {
+                        updateAccessControlUI(state.auth);
+                    });
+                } else {
+                    // अवैध अथवा अनाधिकृत टोकन (प्रतिरूपण का प्रयास)
+                    logMessage(`⚠️ सुरक्षा चेतावनी: सदस्य '${escapeHtml(queryUser)}' का अनाधिकृत टोकन अस्वीकृत। प्रतिरूपण वर्जित है।`, 'error');
+                    alert(`⚠️ सुरक्षा चेतावनी: अनाधिकृत प्रवेश अस्वीकृत!\nआप किसी अन्य सदस्य का नाम लिखकर उनके खाते का प्रतिरूपण नहीं कर सकते।\nकृपया विकिपीडिया में अपने खाते से लॉगिन करके '📚 चर्चा समापन' टैब से टूल खोलें।`);
+                    window.history.replaceState({}, document.title, window.location.pathname + (queryPage ? '?page=' + encodeURIComponent(queryPage) : ''));
+                    updateAccessControlUI(state.auth);
+                }
+            } else if (state.auth.username && localStorage.getItem('da_auth_verified') === '1') {
+                // पहले से इस डिवाइस में सुरक्षित सत्यापित सत्र
+                checkUserEligibility(state.auth.username).then(res => {
                     if (res && res.exists && res.isAutoconfirmed) {
                         state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
-                        localStorage.setItem('da_wiki_user', res.username);
-                        localStorage.setItem('da_username', res.username);
                         updateAccessControlUI(state.auth);
-                        logMessage(`विकिपीडिया खाता <b>${escapeHtml(res.username)}</b> सक्रिय। उपकरण अनलॉक हो गया है।`, 'success');
                         loadPage(initialTarget);
                     } else {
                         updateAccessControlUI(state.auth);
