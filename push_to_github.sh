@@ -71,7 +71,7 @@ if command -v gh &> /dev/null; then
 fi
 
 # रिमोट यूआरएल
-DEFAULT_REMOTE="https://github.com/FOLLOWME5108/Discussion-arcriever.git"
+DEFAULT_REMOTE="https://github.com/vikrampratap-wiki/Discussion-arcriever-tool.git"
 
 echo ""
 echo -e "${YELLOW}लक्षित GitHub रिपॉजिटरी:${NC} ${BLUE}${DEFAULT_REMOTE}${NC}"
