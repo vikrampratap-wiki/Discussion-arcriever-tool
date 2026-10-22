@@ -49,7 +49,6 @@
         activePreviewPayload: null,
         auth: {
             username: localStorage.getItem('da_username') || '',
-            botPassword: localStorage.getItem('da_botpass') || '',
             isLoggedIn: false,
             isAutoconfirmed: false,
             isBot: false,
@@ -57,7 +56,8 @@
             editCount: 0,
             daysOld: 0,
             groups: [],
-            verified: false
+            verified: false,
+            central: null
         },
         botRunner: {
             isRunning: false,
@@ -300,8 +300,11 @@
 
     function reopenClosedSectionWikitext(sectionObj, cleanVerdict) {
         let body = sectionObj.bodyText;
-        body = body.replace(/\{\{\s*(?:चर्चा[_ ]शीर्ष|Archive[_ ]top|Atop|Cot|Hat|Discussion[_ ]top)(?:\|[^\}]*)?\}\}\s*\n?/gi, '');
-        body = body.replace(/\n?\s*\{\{\s*(?:चर्चा[_ ]तल|Archive[_ ]bottom|Abot|Cob|Hab|Discussion[_ ]bottom)\s*\}\}\s*\n?/gi, '');
+        // 1-2 स्तरों तक नेस्टेड कर्ली ब्रैकेट्स (जैसे {{पूर्ण}}) को भी सुरक्षित रूप से हटाएँ
+        const topPattern = /\{\{\s*(?:चर्चा[_ ]शीर्ष|Archive[_ ]top|Atop|Cot|Hat|Discussion[_ ]top)(?:\|(?:\{\{[^{}]*\}\}|[^{}])*?)?\}\}\s*\n?/gi;
+        const bottomPattern = /\n?\s*\{\{\s*(?:चर्चा[_ ]तल|Archive[_ ]bottom|Abot|Cob|Hab|Discussion[_ ]bottom)\s*\}\}\s*\n?/gi;
+        body = body.replace(topPattern, '');
+        body = body.replace(bottomPattern, '');
         body = body.replace(/<div[^>]*class\s*=\s*"[^"]*(?:discussion-archived|boilerplate)[^"]*"[^>]*>\s*\n?/gi, '');
         body = body.replace(/\n?\s*<\/div>\s*/gi, '\n');
         body = body.replace(/^:''निम्नलिखित चर्चा अब समाप्त हो चुकी है। कृपया इसमें कोई परिवर्तन न करें।''\s*\n?/gm, '');
@@ -448,7 +451,7 @@
         }
     }
 
-    function openLoginModal(tabId = 'ltab-login') {
+    function openLoginModal(tabId = 'ltab-verify') {
         document.querySelectorAll('.login-tab-pane').forEach(p => p.style.display = 'none');
         document.querySelectorAll('[data-ltab]').forEach(b => b.classList.remove('active'));
 
@@ -456,6 +459,11 @@
         const targetBtn = document.querySelector(`[data-ltab="${tabId}"]`);
         if (targetPane) targetPane.style.display = 'block';
         if (targetBtn) targetBtn.classList.add('active');
+
+        const uInput = document.getElementById('verify-username-input');
+        if (uInput && !uInput.value && state.auth.username) {
+            uInput.value = state.auth.username;
+        }
 
         document.getElementById('login-modal').style.display = 'flex';
     }
@@ -997,6 +1005,102 @@
         logMessage('बॉट ऑटोमेशन रोक दिया गया।', 'warning');
     }
 
+    // चर्चा अन्य वार्ता / परियोजना पृष्ठ पर स्थानांतरित करना (Move Thread / Cut to another page)
+    function executeRelocateWorkflow() {
+        if (state.selectedIndices.size === 0) {
+            alert('कृपया स्थानांतरित करने हेतु कम से कम एक चर्चा अनुभाग चुनें।');
+            return;
+        }
+
+        const targetInput = document.getElementById('relocate-target-input');
+        const targetPage = targetInput ? targetInput.value.trim() : '';
+
+        if (!targetPage) {
+            alert('कृपया गंतव्य पृष्ठ का नाम दर्ज करें (उदा: विकिपीडिया:प्रबन्धक सूचनापट)।');
+            if (targetInput) targetInput.focus();
+            return;
+        }
+
+        if (targetPage.toLowerCase() === state.currentPageTitle.toLowerCase()) {
+            alert('गंतव्य पृष्ठ वर्तमान पृष्ठ से भिन्न होना चाहिए।');
+            return;
+        }
+
+        const leaveStub = document.getElementById('chk-relocate-stub') ? document.getElementById('chk-relocate-stub').checked : true;
+        const toRelocate = [];
+        const toRemain = [];
+        const relocatedTitles = [];
+
+        state.parsedData.sections.forEach((sec, idx) => {
+            const secCopy = Object.assign({}, sec);
+            if (state.selectedIndices.has(idx)) {
+                toRelocate.push(secCopy);
+                relocatedTitles.push(secCopy.cleanTitle);
+
+                if (leaveStub) {
+                    const stub = `${secCopy.rawHeading}\n:{{स्थानांतरित|गंतव्य=[[${targetPage}#${secCopy.cleanTitle}]]}} --~~~~\\n\n`;
+                    toRemain.push({ fullText: stub });
+                }
+            } else {
+                toRemain.push(secCopy);
+            }
+        });
+
+        const newSourceWikitext = (state.parsedData.lead || '') + toRemain.map(s => s.fullText).join('');
+
+        const destSections = toRelocate.map(s => {
+            const cleanBody = s.bodyText.replace(/^\r?\n/, '').replace(/\s+$/, '');
+            return `${s.rawHeading}\n:''यह चर्चा [[${state.currentPageTitle}]] से स्थानांतरित होकर यहाँ लाई गई है।'' --~~~~\n\n${cleanBody}\n`;
+        }).join('\n');
+
+        const sourceSummary = `चर्चा स्थानांतरण: ${relocatedTitles.length} चर्चा अनुभाग [[${targetPage}]] पर स्थानांतरित किए गए ([[विकिपीडिया:चर्चा प्रबंधन उपकरण|उपकरण]])`;
+        const targetSummary = `चर्चा स्थानांतरण: [[${state.currentPageTitle}]] से ${relocatedTitles.length} चर्चा अनुभाग यहाँ जोड़े गए ([[विकिपीडिया:चर्चा प्रबंधन उपकरण|उपकरण]])`;
+
+        showPreviewModal({
+            title: `चर्चा स्थानांतरण पूर्वावलोकन (${relocatedTitles.length} अनुभाग)`,
+            summary: sourceSummary,
+            sourceText: newSourceWikitext,
+            archiveText: destSections,
+            targetPage: state.currentPageTitle,
+            archivePage: targetPage,
+            archiveSummary: targetSummary
+        });
+    }
+
+    // चयनित चर्चाएँ पृष्ठ से काटना / विलोपित करना (Cut / Delete Selected Sections)
+    function executeDeleteSectionsWorkflow() {
+        if (state.selectedIndices.size === 0) {
+            alert('कृपया काटने/हटाने हेतु कम से कम एक चर्चा अनुभाग चुनें।');
+            return;
+        }
+
+        const count = state.selectedIndices.size;
+        const confirmMsg = `क्या आप वाकई चयनित ${count} चर्चा अनुभाग(ओं) को वर्तमान पृष्ठ से काटना/हटाना चाहते हैं?`;
+        if (!confirm(confirmMsg)) return;
+
+        const toRemain = [];
+        const deletedTitles = [];
+
+        state.parsedData.sections.forEach((sec, idx) => {
+            if (state.selectedIndices.has(idx)) {
+                deletedTitles.push(sec.cleanTitle);
+            } else {
+                toRemain.push(sec);
+            }
+        });
+
+        const newSourceWikitext = (state.parsedData.lead || '') + toRemain.map(s => s.fullText).join('');
+        const editSummary = `सफ़ाई: ${deletedTitles.length} अप्रचलित/अनुचित चर्चा अनुभाग हटाए गए (${deletedTitles.join(', ')}) ([[विकिपीडिया:चर्चा प्रबंधन उपकरण|उपकरण]])`;
+
+        showPreviewModal({
+            title: `चर्चा विलोपन / सफ़ाई (${deletedTitles.length} अनुभाग)`,
+            summary: editSummary,
+            sourceText: newSourceWikitext,
+            archiveText: null,
+            targetPage: state.currentPageTitle
+        });
+    }
+
     // मोडल प्रदर्शन
     function showPreviewModal(opts) {
         state.activePreviewPayload = opts;
@@ -1012,17 +1116,30 @@
 
         previewSource.value = opts.sourceText;
 
+        const tabBtns = document.querySelectorAll('.preview-tab-btn');
+        if (tabBtns.length >= 2) {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabBtns[0].classList.add('active');
+            tabBtns[0].textContent = `मूल पृष्ठ: ${opts.targetPage}`;
+            if (opts.archivePage) {
+                tabBtns[1].textContent = (opts.archivePage.includes('पुरालेख') ? 'पुरालेख पृष्ठ: ' : 'गंतव्य पृष्ठ: ') + opts.archivePage;
+            } else {
+                tabBtns[1].textContent = 'द्वितीयक पृष्ठ विकिटेक्स्ट';
+            }
+        }
+        pSourcePane.style.display = 'block';
+        pArchivePane.style.display = 'none';
+
         if (opts.archiveText) {
             previewArchive.value = opts.archiveText;
             modalTabs.style.display = 'flex';
         } else {
             modalTabs.style.display = 'none';
-            pSourcePane.style.display = 'block';
-            pArchivePane.style.display = 'none';
         }
 
         const wikiEditBtn = document.getElementById('btn-open-wiki-edit');
         wikiEditBtn.href = `https://hi.wikipedia.org/w/index.php?title=${encodeURIComponent(opts.targetPage)}&action=edit`;
+        wikiEditBtn.textContent = 'विकिपीडिया पर संपादन खोलें ↗';
 
         const copyBtn = document.getElementById('btn-copy-preview');
         copyBtn.onclick = () => {
@@ -1052,507 +1169,609 @@
     // =========================================================================
 
     document.addEventListener('DOMContentLoaded', () => {
-        // थीम आरंभ
+        // 1. थीम आरंभ
         document.documentElement.setAttribute('data-theme', state.theme);
+        const themeBtn = document.getElementById('theme-toggle-btn');
+        if (themeBtn) {
+            themeBtn.addEventListener('click', () => {
+                state.theme = state.theme === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', state.theme);
+                localStorage.setItem('da_theme', state.theme);
+            });
+        }
 
-        document.getElementById('theme-toggle-btn').addEventListener('click', () => {
-            state.theme = state.theme === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', state.theme);
-            localStorage.setItem('da_theme', state.theme);
-        });
-
-        // प्रमाणीकरण व पात्रता आरंभ
+        // 2. प्रमाणीकरण व पात्रता आरंभ
         updateAuthBadgeUI(state.auth);
 
-        // लॉगिन मोडल खोलना / बंद करना
-        document.getElementById('btn-open-login').addEventListener('click', () => openLoginModal('ltab-login'));
-        document.getElementById('btn-verify-eligibility-quick').addEventListener('click', () => openLoginModal('ltab-verify'));
-        document.getElementById('btn-close-login-modal').addEventListener('click', () => {
-            document.getElementById('login-modal').style.display = 'none';
-        });
-        document.getElementById('btn-dismiss-login-modal').addEventListener('click', () => {
-            document.getElementById('login-modal').style.display = 'none';
-        });
+        // 3. लॉगिन व सेंट्रलऑथ मोडल Butons
+        const openLoginBtn = document.getElementById('btn-open-login');
+        if (openLoginBtn) {
+            openLoginBtn.addEventListener('click', () => openLoginModal('ltab-verify'));
+        }
 
-        // लॉगिन मोडल सब-टैब्स
-        document.querySelectorAll('[data-ltab]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.login-tab-pane').forEach(p => p.style.display = 'none');
-                document.querySelectorAll('[data-ltab]').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                document.getElementById(btn.dataset.ltab).style.display = 'block';
-            });
-        });
-
-        // पात्रता सत्यापन बटन
-        document.getElementById('btn-check-user-eligibility').addEventListener('click', async () => {
-            const uInput = document.getElementById('verify-username-input').value.trim();
-            if (!uInput) return;
-
-            const resBox = document.getElementById('verification-result-box');
-            resBox.style.display = 'block';
-            resBox.innerHTML = '<span class="text-muted">विकिपीडिया से जानकारी ली जा रही है...</span>';
-
-            const res = await checkUserEligibility(uInput);
-            if (!res || !res.exists) {
-                resBox.innerHTML = `<span class="text-danger font-bold">❌ त्रुटि:</span> ${res ? res.message || res.error : 'सदस्य उपलब्ध नहीं है।'}`;
-                return;
-            }
-
-            const autoconfirmedTag = res.isAutoconfirmed
-                ? '<span class="badge-autoconfirmed">✅ स्वतः स्थापित (पात्र)</span>'
-                : '<span class="badge-restricted">❌ अपात्र</span>';
-
-            const globalEdits = res.central ? res.central.globalEditCount.toLocaleString('hi-IN') : '—';
-            const homeWiki = res.central && res.central.home ? res.central.home : 'hiwiki';
-            const sulLink = `https://meta.wikimedia.org/wiki/Special:CentralAuth/${encodeURIComponent(res.username)}`;
-
-            resBox.innerHTML = `
-                <div class="central-auth-card">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <span class="user-avatar" style="width:28px; height:28px; font-size:13px;">${res.username[0] || 'व'}</span>
-                            <div>
-                                <strong>${escapeHtml(res.username)}</strong>
-                                ${res.central ? '<span class="badge-sul" style="margin-left:4px;">🌐 SUL Unified</span>' : ''}
-                            </div>
-                        </div>
-                        ${autoconfirmedTag}
-                    </div>
-                    <div class="metric-grid">
-                        <div class="metric-box">
-                            <div class="metric-val">${res.editCount.toLocaleString('hi-IN')}</div>
-                            <div class="metric-lbl">🇮🇳 हिन्दी संपादन</div>
-                        </div>
-                        <div class="metric-box">
-                            <div class="metric-val">${globalEdits}</div>
-                            <div class="metric-lbl">🌍 वैश्विक संपादन (SUL)</div>
-                        </div>
-                        <div class="metric-box">
-                            <div class="metric-val">${homeWiki}</div>
-                            <div class="metric-lbl">🏠 मूल विकि</div>
-                        </div>
-                    </div>
-                    <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center; font-size:12px; flex-wrap:wrap; gap:8px;">
-                        <span class="text-muted">खाता आयु: <strong>${res.daysOld} दिन</strong> (${res.registration ? res.registration.split('T')[0] : '—'})</span>
-                        <a href="${sulLink}" target="_blank" class="link-btn">सेंट्रलऑथ प्रोफ़ाइल (Meta) ↗</a>
-                    </div>
-                    ${res.isAutoconfirmed ? `
-                    <div style="margin-top:10px; padding-top:8px; border-top:1px dashed var(--border-color); text-align:right;">
-                        <button type="button" id="btn-use-this-user" class="btn btn-primary btn-sm">
-                            ✓ इस खाते से उपकरण प्रारंभ करें
-                        </button>
-                    </div>` : ''}
-                </div>
-            `;
-
-            if (res.isAutoconfirmed) {
-                state.auth = Object.assign(state.auth, res);
-                updateAuthBadgeUI(state.auth);
-                localStorage.setItem('da_username', res.username);
-
-                const useBtn = document.getElementById('btn-use-this-user');
-                if (useBtn) {
-                    useBtn.addEventListener('click', () => {
-                        document.getElementById('login-modal').style.display = 'none';
-                        logMessage(`सेंट्रलऑथ लॉगिन: <b>${res.username}</b> सक्रिय हुआ।`, 'success');
-                    });
-                }
-            }
-        });
-
-        // लॉगिन बटन
-        document.getElementById('btn-do-login').addEventListener('click', async () => {
-            const uName = document.getElementById('login-username').value.trim();
-            const uPass = document.getElementById('login-password').value.trim();
-            const feedback = document.getElementById('login-feedback');
-
-            if (!uName) {
-                alert('कृपया सदस्य नाम दर्ज करें।');
-                return;
-            }
-
-            feedback.style.display = 'block';
-            feedback.className = 'security-box';
-            feedback.innerHTML = 'सदस्य जानकारी व पात्रता जाँची जा रही है...';
-
-            const userCheck = await checkUserEligibility(uName);
-            if (!userCheck || !userCheck.exists) {
-                feedback.className = 'security-box danger';
-                feedback.innerHTML = `❌ सदस्य '${uName}' विकिपीडिया पर नहीं मिला।`;
-                return;
-            }
-
-            if (!userCheck.isAutoconfirmed) {
-                feedback.className = 'security-box danger';
-                feedback.innerHTML = `⚠️ <strong>अपात्र:</strong> यह खाता न्यूनतम 'स्वतः स्थापित सदस्य' नहीं है। चर्चा समापन हेतु 4 दिन पुराना खाता और 10+ संपादन अनिवार्य हैं।`;
-                return;
-            }
-
-            state.auth = Object.assign(state.auth, userCheck, {
-                botPassword: uPass,
-                isLoggedIn: true
-            });
-
-            if (document.getElementById('chk-remember-login').checked) {
-                localStorage.setItem('da_username', uName);
-                if (uPass) localStorage.setItem('da_botpass', uPass);
-            }
-
-            updateAuthBadgeUI(state.auth);
-            feedback.className = 'security-box success';
-            feedback.innerHTML = `✓ बधाई! सदस्य <strong>${uName}</strong> सफलतापूर्वक सत्यापित एवं लॉगिन हो गए हैं।`;
-            logMessage(`सदस्य <strong>${uName}</strong> लॉगिन व पात्रता सत्यापित।`, 'success');
-
-            setTimeout(() => {
-                document.getElementById('login-modal').style.display = 'none';
-            }, 1200);
-        });
-
-        // लॉगआउट बटन
-        document.getElementById('btn-logout').addEventListener('click', () => {
-            localStorage.removeItem('da_username');
-            localStorage.removeItem('da_botpass');
-            state.auth.isAutoconfirmed = false;
-            state.auth.isLoggedIn = false;
-            state.auth.username = '';
-            updateAuthBadgeUI(null);
-            logMessage('सत्र समाप्त (लॉगआउट)।', 'info');
-        });
-
-        // सदस्य बदलें बटन (अन्य सदस्यों हेतु)
         const switchUserBtn = document.getElementById('btn-switch-user');
         if (switchUserBtn) {
             switchUserBtn.addEventListener('click', () => openLoginModal('ltab-verify'));
         }
 
-        // एकल फ़ाइल डाउनलोड बटन्स
-        document.getElementById('btn-download-standalone').addEventListener('click', downloadStandaloneBundle);
-        document.getElementById('btn-download-standalone-footer').addEventListener('click', downloadStandaloneBundle);
-
-        // बॉट ऑटोमेशन बटन्स
-        document.getElementById('btn-bot-scan').addEventListener('click', scanBotEligibleSections);
-        document.getElementById('btn-bot-start').addEventListener('click', startBotAutomation);
-        document.getElementById('btn-bot-stop').addEventListener('click', stopBotAutomation);
-
-        // पृष्ठ लोडिंग
-        document.getElementById('load-page-btn').addEventListener('click', () => {
-            loadPage(document.getElementById('page-input').value);
-        });
-
-        document.getElementById('page-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') loadPage(document.getElementById('page-input').value);
-        });
-
-        document.getElementById('quick-preset-select').addEventListener('change', (e) => {
-            if (e.target.value) {
-                document.getElementById('page-input').value = e.target.value;
-                loadPage(e.target.value);
-            }
-        });
-
-        // निष्कर्ष प्रीसेट
-        document.getElementById('verdict-presets').addEventListener('change', (e) => {
-            const val = e.target.value;
-            if (val) {
-                const inp = document.getElementById('close-verdict');
-                inp.value = inp.value.trim() ? `${inp.value.trim()} ${val}` : val;
-                e.target.value = '';
-            }
-        });
-
-        // चेकबॉक्सेस एवं चयन
-        document.getElementById('master-checkbox').addEventListener('change', (e) => {
-            const checked = e.target.checked;
-            document.querySelectorAll('.sec-checkbox').forEach(cb => {
-                cb.checked = checked;
-                const idx = parseInt(cb.dataset.idx, 10);
-                if (checked) state.selectedIndices.add(idx);
-                else state.selectedIndices.delete(idx);
+        const closeLoginBtn = document.getElementById('btn-close-login-modal');
+        if (closeLoginBtn) {
+            closeLoginBtn.addEventListener('click', () => {
+                document.getElementById('login-modal').style.display = 'none';
             });
-            updateSelectedCounter();
-        });
+        }
 
-        document.getElementById('sections-tbody').addEventListener('change', (e) => {
-            if (e.target.classList.contains('sec-checkbox')) {
-                const idx = parseInt(e.target.dataset.idx, 10);
-                if (e.target.checked) state.selectedIndices.add(idx);
-                else state.selectedIndices.delete(idx);
-                updateSelectedCounter();
-            }
-        });
-
-        // त्वरित साधन बटन (तालिका के भीतर)
-        document.getElementById('sections-tbody').addEventListener('click', (e) => {
-            const btn = e.target.closest('button');
-            if (!btn) return;
-
-            const idx = parseInt(btn.dataset.idx, 10);
-            const sec = state.parsedData.sections[idx];
-
-            if (btn.classList.contains('view-sec-btn')) {
-                showPreviewModal({
-                    title: `अनुभाग #${sec.index}: ${sec.title}`,
-                    summary: `अनुभाग विकिटेक्स्ट दर्शन`,
-                    sourceText: sec.fullText,
-                    targetPage: state.currentPageTitle
-                });
-            } else if (btn.classList.contains('copy-link-btn')) {
-                const link = `[[${state.currentPageTitle}#${sec.cleanTitle}]]`;
-                navigator.clipboard.writeText(link).then(() => {
-                    logMessage(`विकि-कड़ी कॉपी की गई: <code>${link}</code>`, 'info');
-                    alert(`कड़ी कॉपी हुई: ${link}`);
-                });
-            }
-        });
-
-        // फ़िल्टर बटन्स
-        document.getElementById('btn-select-all').addEventListener('click', () => {
-            document.querySelectorAll('#sections-tbody tr:not([style*="display: none"]) .sec-checkbox').forEach(cb => {
-                cb.checked = true;
-                state.selectedIndices.add(parseInt(cb.dataset.idx, 10));
+        const dismissLoginBtn = document.getElementById('btn-dismiss-login-modal');
+        if (dismissLoginBtn) {
+            dismissLoginBtn.addEventListener('click', () => {
+                document.getElementById('login-modal').style.display = 'none';
             });
-            updateSelectedCounter();
-        });
+        }
 
-        document.getElementById('btn-select-none').addEventListener('click', () => {
-            document.querySelectorAll('.sec-checkbox').forEach(cb => cb.checked = false);
-            state.selectedIndices.clear();
-            updateSelectedCounter();
-        });
-
-        document.getElementById('btn-select-closed').addEventListener('click', () => {
-            document.querySelectorAll('.sec-checkbox').forEach(cb => {
-                const idx = parseInt(cb.dataset.idx, 10);
-                const isClosed = state.parsedData.sections[idx].isClosed;
-                cb.checked = isClosed;
-                if (isClosed) state.selectedIndices.add(idx);
-                else state.selectedIndices.delete(idx);
+        // मोडल सब-टैब्स
+        document.querySelectorAll('[data-ltab]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.login-tab-pane').forEach(p => p.style.display = 'none');
+                document.querySelectorAll('[data-ltab]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const target = document.getElementById(btn.dataset.ltab);
+                if (target) target.style.display = 'block';
             });
-            updateSelectedCounter();
         });
 
-        document.getElementById('btn-select-open').addEventListener('click', () => {
-            document.querySelectorAll('.sec-checkbox').forEach(cb => {
-                const idx = parseInt(cb.dataset.idx, 10);
-                const isOpen = !state.parsedData.sections[idx].isClosed && !state.parsedData.sections[idx].isEmpty;
-                cb.checked = isOpen;
-                if (isOpen) state.selectedIndices.add(idx);
-                else state.selectedIndices.delete(idx);
-            });
-            updateSelectedCounter();
-        });
+        // 4. पात्रता व सेंट्रलऑथ सत्यापन
+        const checkEligBtn = document.getElementById('btn-check-user-eligibility');
+        if (checkEligBtn) {
+            checkEligBtn.addEventListener('click', async () => {
+                const uInput = document.getElementById('verify-username-input').value.trim();
+                if (!uInput) {
+                    alert('कृपया विकिमीडिया सदस्य नाम दर्ज करें।');
+                    return;
+                }
 
-        document.getElementById('btn-select-empty').addEventListener('click', () => {
-            document.querySelectorAll('.sec-checkbox').forEach(cb => {
-                const idx = parseInt(cb.dataset.idx, 10);
-                const isEmpty = state.parsedData.sections[idx].isEmpty;
-                cb.checked = isEmpty;
-                if (isEmpty) state.selectedIndices.add(idx);
-                else state.selectedIndices.delete(idx);
-            });
-            updateSelectedCounter();
-        });
+                const resBox = document.getElementById('verification-result-box');
+                resBox.style.display = 'block';
+                resBox.innerHTML = '<div style="padding:10px; text-align:center;"><span class="text-muted">⏳ विकिमीडिया सेंट्रलऑथ (meta.wikimedia.org) एवं हिन्दी विकिपीडिया से जानकारी सत्यापित की जा रही है...</span></div>';
 
-        document.getElementById('btn-select-invert').addEventListener('click', () => {
-            document.querySelectorAll('.sec-checkbox').forEach(cb => {
-                const idx = parseInt(cb.dataset.idx, 10);
-                cb.checked = !cb.checked;
-                if (cb.checked) state.selectedIndices.add(idx);
-                else state.selectedIndices.delete(idx);
-            });
-            updateSelectedCounter();
-        });
+                const res = await checkUserEligibility(uInput);
+                if (!res || !res.exists) {
+                    resBox.innerHTML = `<div class="security-box danger">❌ <strong>त्रुटि:</strong> ${res ? escapeHtml(res.message || res.error) : 'यह सदस्य नाम विकिमीडिया पर नहीं मिला।'}</div>`;
+                    return;
+                }
 
-        document.getElementById('filter-inactive-days').addEventListener('change', (e) => {
-            const minDays = parseInt(e.target.value, 10);
-            if (isNaN(minDays)) return;
+                const autoconfirmedTag = res.isAutoconfirmed
+                    ? '<span class="badge-autoconfirmed">✅ स्वतः स्थापित (पात्र)</span>'
+                    : '<span class="badge-restricted">⚠️ न्यूनतम पात्रता शेष (4 दिन + 10 संपादन)</span>';
 
-            let count = 0;
-            document.querySelectorAll('.sec-checkbox').forEach(cb => {
-                const idx = parseInt(cb.dataset.idx, 10);
-                const sec = state.parsedData.sections[idx];
-                const match = (!sec.isEmpty && sec.daysInactive >= minDays);
-                cb.checked = match;
-                if (match) {
-                    state.selectedIndices.add(idx);
-                    count++;
-                } else {
-                    state.selectedIndices.delete(idx);
+                const globalEdits = res.central ? res.central.globalEditCount.toLocaleString('hi-IN') : '—';
+                const homeWiki = res.central && res.central.home ? res.central.home : 'hiwiki';
+                const sulLink = `https://meta.wikimedia.org/wiki/Special:CentralAuth/${encodeURIComponent(res.username)}`;
+
+                resBox.innerHTML = `
+                    <div class="central-auth-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span class="user-avatar" style="width:32px; height:32px; font-size:14px;">${escapeHtml(res.username[0] || 'व')}</span>
+                                <div>
+                                    <strong style="font-size:15px;">${escapeHtml(res.username)}</strong>
+                                    ${res.central ? '<span class="badge-sul" style="margin-left:5px;">🌐 CentralAuth SUL</span>' : ''}
+                                </div>
+                            </div>
+                            ${autoconfirmedTag}
+                        </div>
+                        <div class="metric-grid">
+                            <div class="metric-box">
+                                <div class="metric-val">${res.editCount.toLocaleString('hi-IN')}</div>
+                                <div class="metric-lbl">🇮🇳 हिन्दी विकि संपादन</div>
+                            </div>
+                            <div class="metric-box">
+                                <div class="metric-val">${globalEdits}</div>
+                                <div class="metric-lbl">🌍 वैश्विक संपादन (SUL)</div>
+                            </div>
+                            <div class="metric-box">
+                                <div class="metric-val">${homeWiki}</div>
+                                <div class="metric-lbl">🏠 गृह विकि (Home)</div>
+                            </div>
+                        </div>
+                        <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center; font-size:12px; flex-wrap:wrap; gap:8px;">
+                            <span class="text-muted">खाता आयु: <strong>${res.daysOld} दिन</strong> (${res.registration ? res.registration.split('T')[0] : '—'})</span>
+                            <a href="${sulLink}" target="_blank" class="link-btn">सेंट्रलऑथ प्रोफ़ाइल (Meta) ↗</a>
+                        </div>
+                        <div style="margin-top:12px; padding-top:10px; border-top:1px dashed var(--border-color); display:flex; justify-content:flex-end;">
+                            <button type="button" id="btn-use-this-user" class="btn btn-primary btn-sm">
+                                ✓ इस खाते से उपकरण प्रारंभ करें
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                const useBtn = document.getElementById('btn-use-this-user');
+                if (useBtn) {
+                    useBtn.addEventListener('click', () => {
+                        state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
+                        updateAuthBadgeUI(state.auth);
+                        localStorage.setItem('da_username', res.username);
+                        document.getElementById('login-modal').style.display = 'none';
+                        logMessage(`विकिमीडिया सेंट्रल लॉगिन: <b>${escapeHtml(res.username)}</b> सफलतापूर्वक सक्रिय हुआ।`, 'success');
+                    });
+                }
+
+                if (res.isAutoconfirmed) {
+                    state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
+                    updateAuthBadgeUI(state.auth);
+                    localStorage.setItem('da_username', res.username);
                 }
             });
-            updateSelectedCounter();
-            logMessage(`<b>${minDays}+ दिन</b> पुराने ${count} अनुभाग चुने गए।`, 'info');
-            e.target.value = '';
-        });
+        }
 
-        // रीयल-टाइम खोज फ़िल्टर
-        document.getElementById('filter-search').addEventListener('input', (e) => {
-            const q = e.target.value.trim().toLowerCase();
-            document.querySelectorAll('#sections-tbody tr').forEach(tr => {
-                const title = tr.dataset.title || '';
-                tr.style.display = (!q || title.includes(q)) ? '' : 'none';
+        // 5. लॉगआउट बटन
+        const logoutBtn = document.getElementById('btn-logout');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                localStorage.removeItem('da_username');
+                state.auth.isAutoconfirmed = false;
+                state.auth.isLoggedIn = false;
+                state.auth.username = '';
+                state.auth.verified = false;
+                updateAuthBadgeUI(null);
+                logMessage('सत्र समाप्त (लॉगआउट)।', 'info');
+            });
+        }
+
+        // 6. मोडल बंद करने के सामान्य श्रोता (Close on Overlay Click & Esc Key)
+        const previewCloseBtn = document.getElementById('btn-close-modal');
+        if (previewCloseBtn) {
+            previewCloseBtn.addEventListener('click', () => {
+                document.getElementById('preview-modal').style.display = 'none';
+            });
+        }
+
+        const previewCancelBtn = document.getElementById('btn-cancel-modal');
+        if (previewCancelBtn) {
+            previewCancelBtn.addEventListener('click', () => {
+                document.getElementById('preview-modal').style.display = 'none';
+            });
+        }
+
+        // मोडल पृष्ठभूमि (Overlay) पर क्लिक करने पर बंद होना
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.style.display = 'none';
+                }
             });
         });
 
-        // टैब्स स्विचिंग
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                btn.classList.add('active');
-                document.getElementById(btn.dataset.tab).classList.add('active');
-            });
+        // Escape कुंजी दबाने पर मोडल बंद होना
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+            }
         });
 
-        // मोडल टैब्स
+        // 7. पूर्वावलोकन मोडल सब-टैब्स
         document.querySelectorAll('.preview-tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.preview-tab-btn').forEach(b => b.classList.remove('active'));
                 document.querySelectorAll('.preview-tab-pane').forEach(p => p.style.display = 'none');
                 btn.classList.add('active');
-                document.getElementById(btn.dataset.ptab).style.display = 'block';
+                const targetPane = document.getElementById(btn.dataset.ptab);
+                if (targetPane) targetPane.style.display = 'block';
+
+                // यदि आर्काइव/गंतव्य सक्रिय है तो संपादन लिंक को तदनुसार बदलें
+                const wikiEditBtn = document.getElementById('btn-open-wiki-edit');
+                if (wikiEditBtn && state.activePreviewPayload) {
+                    const isArchive = btn.dataset.ptab === 'p-archive' && state.activePreviewPayload.archivePage;
+                    const pageToOpen = isArchive ? state.activePreviewPayload.archivePage : state.activePreviewPayload.targetPage;
+                    wikiEditBtn.href = `https://hi.wikipedia.org/w/index.php?title=${encodeURIComponent(pageToOpen)}&action=edit`;
+                    wikiEditBtn.textContent = `विकिपीडिया पर संपादन खोलें ↗`;
+                }
             });
         });
 
-        // मोडल बंद करना
-        document.getElementById('btn-close-modal').addEventListener('click', () => {
-            document.getElementById('preview-modal').style.display = 'none';
+        // 8. मुख्य कार्य Butons
+        const prevCloseBtn = document.getElementById('btn-preview-close');
+        if (prevCloseBtn) prevCloseBtn.addEventListener('click', executeClosePreview);
+
+        const execCloseBtn = document.getElementById('btn-exec-close');
+        if (execCloseBtn) execCloseBtn.addEventListener('click', executeClosePreview);
+
+        const checkArchBtn = document.getElementById('btn-check-archives');
+        if (checkArchBtn) {
+            checkArchBtn.addEventListener('click', () => checkExistingArchives(state.currentPageTitle));
+        }
+
+        const prevArchBtn = document.getElementById('btn-preview-archive');
+        if (prevArchBtn) prevArchBtn.addEventListener('click', () => executeArchiveWorkflow(false));
+
+        const execArchBtn = document.getElementById('btn-exec-archive');
+        if (execArchBtn) execArchBtn.addEventListener('click', () => executeArchiveWorkflow(false));
+
+        const execCloseArchBtn = document.getElementById('btn-exec-close-archive');
+        if (execCloseArchBtn) execCloseArchBtn.addEventListener('click', () => executeArchiveWorkflow(true));
+
+        // 9. सहायक उपकरण (Mini-Tools) Butons
+        // चर्चा पुनः खोलें
+        const reopenBtn = document.getElementById('btn-tool-reopen');
+        if (reopenBtn) {
+            reopenBtn.addEventListener('click', () => {
+                if (state.selectedIndices.size === 0) {
+                    alert('कृपया पुनः खोलने हेतु कम से कम एक बंद अनुभाग चुनें।');
+                    return;
+                }
+                const cleanVerdict = document.getElementById('chk-reopen-clean-verdict').checked;
+                const cloned = state.parsedData.sections.map(s => Object.assign({}, s));
+                const reopenedTitles = [];
+
+                state.selectedIndices.forEach(idx => {
+                    const s = cloned[idx];
+                    if (s.isClosed) {
+                        s.fullText = reopenClosedSectionWikitext(s, cleanVerdict);
+                        s.isClosed = false;
+                        reopenedTitles.push(s.cleanTitle);
+                    }
+                });
+
+                if (reopenedTitles.length === 0) {
+                    alert('चयनित अनुभागों में कोई बंद चर्चा नहीं है।');
+                    return;
+                }
+
+                const newText = (state.parsedData.lead || '') + cloned.map(s => s.fullText).join('');
+                showPreviewModal({
+                    title: `चर्चा पुनः खोलना (${reopenedTitles.length} अनुभाग)`,
+                    summary: `चर्चा पुनः सक्रिय की गई: ${reopenedTitles.join(', ')}`,
+                    sourceText: newText,
+                    targetPage: state.currentPageTitle
+                });
+            });
+        }
+
+        // पुरालेख पेटी जोड़ें
+        const addBoxBtn = document.getElementById('btn-tool-addbox');
+        if (addBoxBtn) {
+            addBoxBtn.addEventListener('click', () => {
+                if (state.parsedData.hasArchiveBox) {
+                    alert('इस पृष्ठ के शीर्ष पर पहले से ही पुरालेख पेटी मौजूद है।');
+                    return;
+                }
+                const newLead = `{{पुरालेख पेटी|auto=yes|search=yes}}\n${state.parsedData.lead || ''}`;
+                const newText = newLead + state.parsedData.sections.map(s => s.fullText).join('');
+                showPreviewModal({
+                    title: `शीर्ष पर पुरालेख पेटी जोड़ना`,
+                    summary: `रखरखाव: पृष्ठ के शीर्ष पर {{पुरालेख पेटी}} साँचा जोड़ा गया`,
+                    sourceText: newText,
+                    targetPage: state.currentPageTitle
+                });
+            });
+        }
+
+        // रिक्त अनुभाग सफ़ाई
+        const cleanEmptyBtn = document.getElementById('btn-tool-cleanempty');
+        if (cleanEmptyBtn) {
+            cleanEmptyBtn.addEventListener('click', () => {
+                const nonEmpty = state.parsedData.sections.filter(s => !s.isEmpty);
+                const emptyCount = state.parsedData.sections.length - nonEmpty.length;
+                if (emptyCount === 0) {
+                    alert('इस पृष्ठ पर कोई भी रिक्त अनुभाग नहीं है।');
+                    return;
+                }
+                const newText = (state.parsedData.lead || '') + nonEmpty.map(s => s.fullText).join('');
+                showPreviewModal({
+                    title: `रिक्त अनुभाग सफ़ाई (${emptyCount} अनुभाग)`,
+                    summary: `सफ़ाई: ${emptyCount} रिक्त अनुभाग हटाए गए`,
+                    sourceText: newText,
+                    targetPage: state.currentPageTitle
+                });
+            });
+        }
+
+        // चर्चा विलोपन / काटना
+        const deleteSecBtn = document.getElementById('btn-tool-deletesections');
+        if (deleteSecBtn) {
+            deleteSecBtn.addEventListener('click', executeDeleteSectionsWorkflow);
+        }
+
+        // चर्चा स्थानांतरण (Move Thread / Cut to another page)
+        const relocateBtn = document.getElementById('btn-tool-relocate');
+        if (relocateBtn) {
+            relocateBtn.addEventListener('click', executeRelocateWorkflow);
+        }
+
+        // पुरालेख अनुक्रमणिका
+        const makeIndexBtn = document.getElementById('btn-tool-makeindex');
+        if (makeIndexBtn) {
+            makeIndexBtn.addEventListener('click', () => {
+                const list = state.selectedIndices.size > 0
+                    ? Array.from(state.selectedIndices).map(i => state.parsedData.sections[i])
+                    : state.parsedData.sections;
+
+                const isTable = document.querySelector('input[name="index-fmt"]:checked').value === 'table';
+                let out = '';
+
+                if (isTable) {
+                    out = '{| class="wikitable sortable"\n! क्र. !! चर्चा विषय !! टिप्पणियाँ !! अंतिम गतिविधि !! स्थिति !! कड़ी\n';
+                    list.forEach((s, idx) => {
+                        const st = s.isEmpty ? 'रिक्त' : (s.isClosed ? 'समाप्त' : 'सक्रिय');
+                        out += `|-\n| ${idx + 1} || ${s.title} || ${s.commentCount} || ${s.lastDateStr} || ${st} || [[${state.currentPageTitle}#${s.cleanTitle}|चर्चा देखें]]\n`;
+                    });
+                    out += '|}';
+                } else {
+                    list.forEach(s => {
+                        out += `* [[${state.currentPageTitle}#${s.cleanTitle}|${s.cleanTitle}]] (${s.commentCount} टिप्पणियाँ, अंतिम: ${s.lastDateStr})\n`;
+                    });
+                }
+
+                showPreviewModal({
+                    title: `पुरालेख अनुक्रमणिका (${isTable ? 'सारणी' : 'सूची'})`,
+                    summary: 'पुरालेख अनुक्रमणिका क्लिपबोर्ड हेतु',
+                    sourceText: out,
+                    targetPage: state.currentPageTitle
+                });
+            });
+        }
+
+        // 10. एकल फ़ाइल डाउनलोड Butons
+        const dlBtn = document.getElementById('btn-download-standalone');
+        if (dlBtn) dlBtn.addEventListener('click', downloadStandaloneBundle);
+        const dlFooterBtn = document.getElementById('btn-download-standalone-footer');
+        if (dlFooterBtn) dlFooterBtn.addEventListener('click', downloadStandaloneBundle);
+
+        // 11. बॉट ऑटोमेशन Butons
+        const scanBotBtn = document.getElementById('btn-bot-scan');
+        if (scanBotBtn) scanBotBtn.addEventListener('click', scanBotEligibleSections);
+        const startBotBtn = document.getElementById('btn-bot-start');
+        if (startBotBtn) startBotBtn.addEventListener('click', startBotAutomation);
+        const stopBotBtn = document.getElementById('btn-bot-stop');
+        if (stopBotBtn) stopBotBtn.addEventListener('click', stopBotAutomation);
+
+        // 12. पृष्ठ लोडिंग व इनपुट
+        const loadBtn = document.getElementById('load-page-btn');
+        if (loadBtn) {
+            loadBtn.addEventListener('click', () => {
+                loadPage(document.getElementById('page-input').value);
+            });
+        }
+
+        const pageInput = document.getElementById('page-input');
+        if (pageInput) {
+            pageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') loadPage(pageInput.value);
+            });
+        }
+
+        const presetSelect = document.getElementById('quick-preset-select');
+        if (presetSelect) {
+            presetSelect.addEventListener('change', (e) => {
+                if (e.target.value) {
+                    document.getElementById('page-input').value = e.target.value;
+                    loadPage(e.target.value);
+                }
+            });
+        }
+
+        // 13. फ़िल्टर व चयन Butons
+        const selectAllBtn = document.getElementById('btn-select-all');
+        if (selectAllBtn) {
+            selectAllBtn.addEventListener('click', () => {
+                document.querySelectorAll('.sec-checkbox').forEach(cb => {
+                    cb.checked = true;
+                    state.selectedIndices.add(parseInt(cb.dataset.idx, 10));
+                });
+                updateSelectedCounter();
+            });
+        }
+
+        const selectNoneBtn = document.getElementById('btn-select-none');
+        if (selectNoneBtn) {
+            selectNoneBtn.addEventListener('click', () => {
+                document.querySelectorAll('.sec-checkbox').forEach(cb => {
+                    cb.checked = false;
+                });
+                state.selectedIndices.clear();
+                updateSelectedCounter();
+            });
+        }
+
+        const selectClosedBtn = document.getElementById('btn-select-closed');
+        if (selectClosedBtn) {
+            selectClosedBtn.addEventListener('click', () => {
+                document.querySelectorAll('.sec-checkbox').forEach(cb => {
+                    const idx = parseInt(cb.dataset.idx, 10);
+                    const isClosed = state.parsedData.sections[idx].isClosed;
+                    cb.checked = isClosed;
+                    if (isClosed) state.selectedIndices.add(idx);
+                    else state.selectedIndices.delete(idx);
+                });
+                updateSelectedCounter();
+            });
+        }
+
+        const selectOpenBtn = document.getElementById('btn-select-open');
+        if (selectOpenBtn) {
+            selectOpenBtn.addEventListener('click', () => {
+                document.querySelectorAll('.sec-checkbox').forEach(cb => {
+                    const idx = parseInt(cb.dataset.idx, 10);
+                    const isOpen = !state.parsedData.sections[idx].isClosed && !state.parsedData.sections[idx].isEmpty;
+                    cb.checked = isOpen;
+                    if (isOpen) state.selectedIndices.add(idx);
+                    else state.selectedIndices.delete(idx);
+                });
+                updateSelectedCounter();
+            });
+        }
+
+        const selectEmptyBtn = document.getElementById('btn-select-empty');
+        if (selectEmptyBtn) {
+            selectEmptyBtn.addEventListener('click', () => {
+                document.querySelectorAll('.sec-checkbox').forEach(cb => {
+                    const idx = parseInt(cb.dataset.idx, 10);
+                    const isEmpty = state.parsedData.sections[idx].isEmpty;
+                    cb.checked = isEmpty;
+                    if (isEmpty) state.selectedIndices.add(idx);
+                    else state.selectedIndices.delete(idx);
+                });
+                updateSelectedCounter();
+            });
+        }
+
+        const selectInvertBtn = document.getElementById('btn-select-invert');
+        if (selectInvertBtn) {
+            selectInvertBtn.addEventListener('click', () => {
+                document.querySelectorAll('.sec-checkbox').forEach(cb => {
+                    const idx = parseInt(cb.dataset.idx, 10);
+                    cb.checked = !cb.checked;
+                    if (cb.checked) state.selectedIndices.add(idx);
+                    else state.selectedIndices.delete(idx);
+                });
+                updateSelectedCounter();
+            });
+        }
+
+        const filterDays = document.getElementById('filter-inactive-days');
+        if (filterDays) {
+            filterDays.addEventListener('change', (e) => {
+                const minDays = parseInt(e.target.value, 10);
+                if (isNaN(minDays)) return;
+
+                let count = 0;
+                document.querySelectorAll('.sec-checkbox').forEach(cb => {
+                    const idx = parseInt(cb.dataset.idx, 10);
+                    const sec = state.parsedData.sections[idx];
+                    const match = (!sec.isEmpty && sec.daysInactive >= minDays);
+                    cb.checked = match;
+                    if (match) {
+                        state.selectedIndices.add(idx);
+                        count++;
+                    } else {
+                        state.selectedIndices.delete(idx);
+                    }
+                });
+                updateSelectedCounter();
+                logMessage(`<b>${minDays}+ दिन</b> पुराने ${count} अनुभाग चुने गए।`, 'info');
+                e.target.value = '';
+            });
+        }
+
+        const filterSearch = document.getElementById('filter-search');
+        if (filterSearch) {
+            filterSearch.addEventListener('input', (e) => {
+                const q = e.target.value.trim().toLowerCase();
+                document.querySelectorAll('#sections-tbody tr').forEach(tr => {
+                    const title = tr.dataset.title || '';
+                    tr.style.display = (!q || title.includes(q)) ? '' : 'none';
+                });
+            });
+        }
+
+        // 14. टैब्स स्विचिंग
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                const target = document.getElementById(btn.dataset.tab);
+                if (target) target.classList.add('active');
+            });
         });
 
-        // क्रियान्वयन बटन्स
-        document.getElementById('btn-preview-close').addEventListener('click', executeClosePreview);
-        document.getElementById('btn-exec-close').addEventListener('click', executeClosePreview);
+        // 15. चेकबॉक्सेस एवं चयन
+        const masterCheckbox = document.getElementById('master-checkbox');
+        if (masterCheckbox) {
+            masterCheckbox.addEventListener('change', (e) => {
+                const checked = e.target.checked;
+                document.querySelectorAll('.sec-checkbox').forEach(cb => {
+                    cb.checked = checked;
+                    const idx = parseInt(cb.dataset.idx, 10);
+                    if (checked) state.selectedIndices.add(idx);
+                    else state.selectedIndices.delete(idx);
+                });
+                updateSelectedCounter();
+            });
+        }
 
-        document.getElementById('btn-check-archives').addEventListener('click', () => {
-            checkExistingArchives(state.currentPageTitle);
-        });
-
-        document.getElementById('btn-preview-archive').addEventListener('click', () => executeArchiveWorkflow(false));
-        document.getElementById('btn-exec-archive').addEventListener('click', () => executeArchiveWorkflow(false));
-        document.getElementById('btn-exec-close-archive').addEventListener('click', () => executeArchiveWorkflow(true));
-
-        // सहायक उपकरण
-        document.getElementById('btn-tool-reopen').addEventListener('click', () => {
-            if (state.selectedIndices.size === 0) {
-                alert('कृपया पुनः खोलने हेतु कम से कम एक बंद अनुभाग चुनें।');
-                return;
-            }
-            const cleanVerdict = document.getElementById('chk-reopen-clean-verdict').checked;
-            const cloned = state.parsedData.sections.map(s => Object.assign({}, s));
-            const reopenedTitles = [];
-
-            state.selectedIndices.forEach(idx => {
-                const s = cloned[idx];
-                if (s.isClosed) {
-                    s.fullText = reopenClosedSectionWikitext(s, cleanVerdict);
-                    s.isClosed = false;
-                    reopenedTitles.push(s.cleanTitle);
+        const tbodyEl = document.getElementById('sections-tbody');
+        if (tbodyEl) {
+            tbodyEl.addEventListener('change', (e) => {
+                if (e.target.classList.contains('sec-checkbox')) {
+                    const idx = parseInt(e.target.dataset.idx, 10);
+                    if (e.target.checked) state.selectedIndices.add(idx);
+                    else state.selectedIndices.delete(idx);
+                    updateSelectedCounter();
                 }
             });
 
-            if (reopenedTitles.length === 0) {
-                alert('चयनित अनुभागों में कोई बंद चर्चा नहीं है।');
-                return;
-            }
+            // त्वरित साधन Butons (तालिका के भीतर: देखना व कड़ी कॉपी)
+            tbodyEl.addEventListener('click', (e) => {
+                const btn = e.target.closest('button');
+                if (!btn) return;
 
-            const newText = (state.parsedData.lead || '') + cloned.map(s => s.fullText).join('');
-            showPreviewModal({
-                title: `चर्चा पुनः खोलना (${reopenedTitles.length} अनुभाग)`,
-                summary: `चर्चा पुनः सक्रिय की गई: ${reopenedTitles.join(', ')}`,
-                sourceText: newText,
-                targetPage: state.currentPageTitle
+                const idx = parseInt(btn.dataset.idx, 10);
+                const sec = state.parsedData.sections[idx];
+
+                if (btn.classList.contains('view-sec-btn')) {
+                    showPreviewModal({
+                        title: `अनुभाग #${sec.index}: ${sec.title}`,
+                        summary: `अनुभाग विकिटेक्स्ट दर्शन`,
+                        sourceText: sec.fullText,
+                        targetPage: state.currentPageTitle
+                    });
+                } else if (btn.classList.contains('copy-link-btn')) {
+                    const link = `[[${state.currentPageTitle}#${sec.cleanTitle}]]`;
+                    navigator.clipboard.writeText(link).then(() => {
+                        logMessage(`विकि-कड़ी कॉपी की गई: <code>${link}</code>`, 'info');
+                        alert(`कड़ी कॉपी हुई: ${link}`);
+                    });
+                }
             });
-        });
+        }
 
-        document.getElementById('btn-tool-addbox').addEventListener('click', () => {
-            if (state.parsedData.hasArchiveBox) {
-                alert('इस पृष्ठ के शीर्ष पर पहले से ही पुरालेख पेटी मौजूद है।');
-                return;
-            }
-            const newLead = `{{पुरालेख पेटी|auto=yes|search=yes}}\n${state.parsedData.lead || ''}`;
-            const newText = newLead + state.parsedData.sections.map(s => s.fullText).join('');
-            showPreviewModal({
-                title: `शीर्ष पर पुरालेख पेटी जोड़ना`,
-                summary: `रखरखाव: पृष्ठ के शीर्ष पर {{पुरालेख पेटी}} साँचा जोड़ा गया`,
-                sourceText: newText,
-                targetPage: state.currentPageTitle
+        // निष्कर्ष प्रीसेट
+        const verdictPresets = document.getElementById('verdict-presets');
+        if (verdictPresets) {
+            verdictPresets.addEventListener('change', (e) => {
+                const val = e.target.value;
+                if (val) {
+                    const inp = document.getElementById('close-verdict');
+                    inp.value = inp.value.trim() ? `${inp.value.trim()} ${val}` : val;
+                    e.target.value = '';
+                }
             });
-        });
+        }
 
-        document.getElementById('btn-tool-cleanempty').addEventListener('click', () => {
-            const nonEmpty = state.parsedData.sections.filter(s => !s.isEmpty);
-            const emptyCount = state.parsedData.sections.length - nonEmpty.length;
-            if (emptyCount === 0) {
-                alert('इस पृष्ठ पर कोई भी रिक्त अनुभाग नहीं है।');
-                return;
-            }
-            const newText = (state.parsedData.lead || '') + nonEmpty.map(s => s.fullText).join('');
-            showPreviewModal({
-                title: `रिक्त अनुभाग सफ़ाई (${emptyCount} अनुभाग)`,
-                summary: `सफ़ाई: ${emptyCount} रिक्त अनुभाग हटाए गए`,
-                sourceText: newText,
-                targetPage: state.currentPageTitle
+        const clearLogBtn = document.getElementById('btn-clear-log');
+        if (clearLogBtn) {
+            clearLogBtn.addEventListener('click', () => {
+                document.getElementById('activity-log').innerHTML = '';
             });
-        });
+        }
 
-        document.getElementById('btn-tool-makeindex').addEventListener('click', () => {
-            const list = state.selectedIndices.size > 0
-                ? Array.from(state.selectedIndices).map(i => state.parsedData.sections[i])
-                : state.parsedData.sections;
-
-            const isTable = document.querySelector('input[name="index-fmt"]:checked').value === 'table';
-            let out = '';
-
-            if (isTable) {
-                out = '{| class="wikitable sortable"\n! क्र. !! चर्चा विषय !! टिप्पणियाँ !! अंतिम गतिविधि !! स्थिति !! कड़ी\n';
-                list.forEach((s, idx) => {
-                    const st = s.isEmpty ? 'रिक्त' : (s.isClosed ? 'समाप्त' : 'सक्रिय');
-                    out += `|-\n| ${idx + 1} || ${s.title} || ${s.commentCount} || ${s.lastDateStr} || ${st} || [[${state.currentPageTitle}#${s.cleanTitle}|चर्चा देखें]]\n`;
-                });
-                out += '|}';
-            } else {
-                list.forEach(s => {
-                    out += `* [[${state.currentPageTitle}#${s.cleanTitle}|${s.cleanTitle}]] (${s.commentCount} टिप्पणियाँ, अंतिम: ${s.lastDateStr})\n`;
-                });
-            }
-
-            showPreviewModal({
-                title: `पुरालेख अनुक्रमणिका (${isTable ? 'सारणी' : 'सूची'})`,
-                summary: 'पुरालेख अनुक्रमणिका क्लिपबोर्ड हेतु',
-                sourceText: out,
-                targetPage: state.currentPageTitle
-            });
-        });
-
-        document.getElementById('btn-clear-log').addEventListener('click', () => {
-            document.getElementById('activity-log').innerHTML = '';
-        });
-
-        // प्रारंभिक URL पैरामीटर्स एवं सदस्य सत्यापन (?page=...&user=...)
+        // 16. प्रारंभिक URL पैरामीटर्स एवं सदस्य सत्यापन (?page=...&user=...)
         const urlParams = new URLSearchParams(window.location.search);
         const queryPage = urlParams.get('page');
         const queryUser = urlParams.get('user');
 
         if (queryUser) {
             checkUserEligibility(queryUser).then(res => {
-                if (res && res.isAutoconfirmed) {
-                    state.auth = Object.assign(state.auth, res, { isLoggedIn: true });
+                if (res && res.exists) {
+                    state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
                     localStorage.setItem('da_username', res.username);
                     updateAuthBadgeUI(state.auth);
+                    logMessage(`सेंट्रलऑथ स्वतः सत्यापन: <b>${escapeHtml(res.username)}</b> सक्रिय हुआ।`, 'success');
                 }
             });
         } else if (state.auth.username) {
             checkUserEligibility(state.auth.username).then(res => {
-                if (res && res.isAutoconfirmed) {
-                    state.auth = Object.assign(state.auth, res);
+                if (res && res.exists) {
+                    state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
                     updateAuthBadgeUI(state.auth);
                 }
             });
         }
 
         const initialTarget = queryPage || 'विकिपीडिया:चौपाल';
-        document.getElementById('page-input').value = initialTarget;
+        const pageInp = document.getElementById('page-input');
+        if (pageInp) pageInp.value = initialTarget;
         loadPage(initialTarget);
     });
 

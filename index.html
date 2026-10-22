@@ -369,10 +369,18 @@
                         <div class="tool-icon">🧹</div>
                         <h3 class="tool-title">रिक्त अनुभाग सफ़ाई</h3>
                         <p class="tool-desc">जिन अनुभागों में केवल शीर्षक है और कोई टिप्पणी नहीं है, उन्हें पृष्ठ से हटाएँ।</p>
-                        <button id="btn-tool-cleanempty" class="btn btn-danger btn-block">सभी रिक्त अनुभाग हटाएँ</button>
+                        <button id="btn-tool-cleanempty" class="btn btn-secondary btn-block">सभी रिक्त अनुभाग हटाएँ</button>
                     </div>
 
-                    <!-- टूल 5: चर्चा अन्य पृष्ठ पर भेजें -->
+                    <!-- टूल 5: चर्चा विलोपन / काटना -->
+                    <div class="tool-card">
+                        <div class="tool-icon">✂️</div>
+                        <h3 class="tool-title">चर्चा विलोपन / काटना (Cut / Delete)</h3>
+                        <p class="tool-desc">गलत स्थान, स्पैम या अनुपयुक्त चयनित चर्चाओं को वर्तमान पृष्ठ से काटें अथवा हटाएँ।</p>
+                        <button id="btn-tool-deletesections" class="btn btn-danger btn-block">चयनित चर्चाएँ पृष्ठ से काटें/हटाएँ</button>
+                    </div>
+
+                    <!-- टूल 6: चर्चा अन्य पृष्ठ पर भेजें -->
                     <div class="tool-card tool-span-2">
                         <div class="tool-icon">🔀</div>
                         <h3 class="tool-title">चर्चा अन्य वार्ता / परियोजना पृष्ठ पर स्थानांतरित करें (Move Thread)</h3>
@@ -391,7 +399,7 @@
             <!-- टैब 4: सेटिंग्स व संपादन मोड -->
             <div id="tab-settings" class="tab-content">
                 <div class="tab-intro">
-                    विकिपीडिया पर संपादन सहेजने की विधि और प्राथमिकताएँ निर्धारित करें।
+                    विकिपीडिया पर संपादन सहेजने की विधि और सुरक्षा प्राथमिकताएँ।
                 </div>
 
                 <div class="settings-grid">
@@ -400,8 +408,8 @@
                         <label class="radio-label">
                             <input type="radio" name="edit-method" value="browser" checked />
                             <div>
-                                <strong>ब्राउज़र में सीधा संपादन (One-Click Wikipedia Edit - सुरक्षित एवं अनुशंसित)</strong>
-                                <p class="setting-desc">आपको किसी पासवर्ड की आवश्यकता नहीं है। टूल विकिपीडिया का संपादन पृष्ठ तैयार विकिटेक्स्ट के साथ नए टैब में खोल देगा, जहाँ आप अपने मुख्य विकिपीडिया खाते से 1-क्लिक में सुरक्षित कर सकते हैं।</p>
+                                <strong>ब्राउज़र में सीधा 1-क्लिक संपादन (One-Click Wikipedia Browser Edit - सुरक्षित एवं अनुशंसित)</strong>
+                                <p class="setting-desc">100% सुरक्षित एवं पासवर्ड-रहित। टूल विकिपीडिया का संपादन पृष्ठ तैयार विकिटेक्स्ट और अंतर (Diff) के साथ नए टैब में खोलता है। चूंकि आप अपने ब्राउज़र में विकिपीडिया पर लॉगिन हैं, इसलिए आप 1-क्लिक में 'बदलाव सहेजें' कर सकते हैं।</p>
                             </div>
                         </label>
 
@@ -409,30 +417,19 @@
                             <input type="radio" name="edit-method" value="clipboard" />
                             <div>
                                 <strong>क्लिपबोर्ड कॉपी मोड (Clipboard Mode)</strong>
-                                <p class="setting-desc">टूल नया विकिटेक्स्ट क्लिपबोर्ड पर कॉपी करेगा और विकिपीडिया पृष्ठ खोलेगा, जहाँ आप सीधे पेस्ट कर सकते हैं।</p>
-                            </div>
-                        </label>
-
-                        <label class="radio-label">
-                            <input type="radio" name="edit-method" value="api" />
-                            <div>
-                                <strong>MediaWiki API द्वारा स्वचालित संपादन (Bot / Direct API)</strong>
-                                <p class="setting-desc">यदि आप बॉट क्रेडेंशियल्स दर्ज करते हैं, तो टूल बिना विकिपीडिया खोले पृष्ठभूमि में संपादन सीधे सुरक्षित कर देगा।</p>
+                                <p class="setting-desc">टूल नया विकिटेक्स्ट क्लिपबोर्ड पर कॉपी करेगा और विकिपीडिया संपादन पृष्ठ खोलेगा, जहाँ आप सीधे पेस्ट करके सहेज सकते हैं।</p>
                             </div>
                         </label>
                     </div>
 
-                    <div id="api-credentials-box" class="setting-box" style="display: none;">
-                        <h3 class="setting-title">MediaWiki API क्रेडेंशियल्स</h3>
-                        <div class="form-group">
-                            <label for="cfg-username" class="form-label">बॉट सदस्य नाम (User@BotName):</label>
-                            <input type="text" id="cfg-username" class="form-control" placeholder="उदा: विक्रम प्रताप@DiscussionArchiver" />
-                        </div>
-                        <div class="form-group">
-                            <label for="cfg-password" class="form-label">बॉट पासवर्ड (Special:BotPasswords से):</label>
-                            <input type="password" id="cfg-password" class="form-control" placeholder="••••••••••••••••" />
-                        </div>
-                        <button id="btn-save-credentials" class="btn btn-secondary btn-sm">क्रेडेंशियल्स सहेजें</button>
+                    <div class="setting-box">
+                        <h3 class="setting-title">🔒 विकिमीडिया सुरक्षा एवं गोपनीयता नीति</h3>
+                        <p class="setting-desc" style="line-height: 1.6; margin-bottom: 8px;">
+                            विकिमीडिया सुरक्षा नीतियों के अनुसार किसी भी बाह्य/तृतीय-पक्ष उपकरण में विकिपीडिया पासवर्ड कभी नहीं मांगना चाहिए।
+                        </p>
+                        <p class="setting-desc" style="line-height: 1.6;">
+                            यह उपकरण <strong>पूर्णतः पासवर्ड-रहित</strong> है। यह केवल विकिमीडिया सेंट्रलऑथ (CentralAuth SUL) के आधिकारिक सार्वजनिक API से आपके खाते की स्थिति व पात्रता की पुष्टि करता है।
+                        </p>
                     </div>
                 </div>
             </div>
@@ -532,6 +529,9 @@
                         <span id="diff-meta-info" class="text-muted text-sm"></span>
                     </div>
                     <div class="footer-right">
+                        <button id="btn-cancel-modal" class="btn btn-secondary">
+                            ✕ बंद करें
+                        </button>
                         <button id="btn-copy-preview" class="btn btn-secondary">
                             📋 क्लिपबोर्ड पर कॉपी करें
                         </button>
@@ -550,52 +550,45 @@
         <div id="login-modal" class="modal-overlay" style="display: none;">
             <div class="modal-dialog" style="max-width: 620px;">
                 <div class="modal-header">
-                    <h3 class="modal-title">🌐 विकिमीडिया सेंट्रल लॉगिन (CentralAuth SUL)</h3>
-                    <button id="btn-close-login-modal" class="modal-close-btn">&times;</button>
+                    <h3 class="modal-title">🌐 विकिमीडिया सेंट्रल लॉगिन (CentralAuth SUL एवं खाता सत्यापन)</h3>
+                    <button id="btn-close-login-modal" class="modal-close-btn" title="मोडल बंद करें">&times;</button>
                 </div>
                 <div class="modal-body">
+                    <div class="security-box success" style="margin-bottom: 12px; font-size: 12.5px; line-height: 1.5;">
+                        <strong>🔒 100% सुरक्षित एवं पासवर्ड-रहित (Password-Free):</strong> यह उपकरण आपके विकिपीडिया पासवर्ड की कभी भी मांग नहीं करता है। आपका खाता सत्यापन सीधे आधिकारिक विकिमीडिया सर्वर (<code>meta.wikimedia.org</code> / <code>hi.wikipedia.org</code>) से प्राप्त किया जाता है और संपादन आपके ब्राउज़र के आधिकारिक विकिपीडिया सत्र द्वारा सुरक्षित होते हैं।
+                    </div>
+
                     <div class="preview-tabs">
-                        <button class="preview-tab-btn active" data-ltab="ltab-verify">🌐 सेंट्रल प्रोफ़ाइल व सत्यापन</button>
-                        <button class="preview-tab-btn" data-ltab="ltab-login">🔑 बॉट पासवर्ड / API</button>
-                        <button class="preview-tab-btn" data-ltab="ltab-gadget">⚡ विकिपीडिया गैजेट</button>
+                        <button class="preview-tab-btn active" data-ltab="ltab-verify">🌐 सेंट्रल खाता सत्यापन (CentralAuth)</button>
+                        <button class="preview-tab-btn" data-ltab="ltab-gadget">⚡ विकिपीडिया गैजेट (common.js)</button>
                     </div>
 
                     <!-- सेंट्रलऑथ प्रोफ़ाइल व सत्यापन टैब -->
                     <div id="ltab-verify" class="login-tab-pane active" style="padding-top: 10px;">
-                        <div class="input-with-button" style="margin-bottom: 12px;">
-                            <input type="text" id="verify-username-input" class="form-control" placeholder="विकिमीडिया सदस्य नाम (उदा. विक्रम प्रताप)" value="विक्रम प्रताप" />
+                        <label for="verify-username-input" class="form-label">विकिमीडिया सदस्य नाम दर्ज करें:</label>
+                        <div class="input-with-button" style="margin-bottom: 10px;">
+                            <input type="text" id="verify-username-input" class="form-control" placeholder="उदा: विक्रम प्रताप अथवा Vikram pratap" value="" />
                             <button id="btn-check-user-eligibility" class="btn btn-wikimedia" style="white-space: nowrap;">
-                                🌐 सेंट्रल लॉगिन
+                                🌐 विकिमीडिया से सत्यापित करें
                             </button>
                         </div>
-                        <div id="verification-result-box" style="display: none;"></div>
-                    </div>
 
-                    <!-- बॉट पासवर्ड टैब -->
-                    <div id="ltab-login" class="login-tab-pane" style="display: none; padding-top: 10px;">
-                        <div class="form-group" style="margin-bottom: 8px;">
-                            <label for="login-username" class="form-label">बॉट / सदस्य नाम:</label>
-                            <input type="text" id="login-username" class="form-control" placeholder="उदा: विक्रम प्रताप अथवा VikramBot" />
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+                            <a href="https://hi.wikipedia.org/wiki/Special:UserLogin" target="_blank" class="link-btn">
+                                🔗 विकिपीडिया पर आधिकारिक लॉगिन ↗
+                            </a>
+                            <a href="https://meta.wikimedia.org/w/index.php?title=Special:UserLogin" target="_blank" class="link-btn">
+                                🌍 मेटा-विकि सेंट्रल लॉगिन ↗
+                            </a>
                         </div>
-                        <div class="form-group" style="margin-bottom: 10px;">
-                            <div class="label-with-addon">
-                                <label for="login-password" class="form-label">बॉट पासवर्ड:</label>
-                                <a href="https://hi.wikipedia.org/wiki/विशेष:बॉट_पासवर्ड" target="_blank" class="link-btn">
-                                    विशेष:बॉट_पासवर्ड ↗
-                                </a>
-                            </div>
-                            <input type="password" id="login-password" class="form-control" placeholder="••••••••••••••••" />
-                        </div>
-                        <div id="login-feedback" style="display: none; margin-bottom: 10px;"></div>
-                        <button id="btn-do-login" class="btn btn-primary btn-block">
-                            🔑 बॉट क्रेडेंशियल्स सहेजें
-                        </button>
+
+                        <div id="verification-result-box" style="display: none;"></div>
                     </div>
 
                     <!-- गैजेट व स्क्रिप्ट टैब -->
                     <div id="ltab-gadget" class="login-tab-pane" style="display: none; padding-top: 10px;">
                         <p class="text-sm text-secondary" style="margin-bottom: 8px;">
-                            विकिपीडिया पर चर्चा पृष्ठ खोलते ही इस टूल को बाईं ओर के 'उपकरण' मेनू में जोड़ने हेतु अपने <code>common.js</code> में जोड़ें:
+                            विकिपीडिया पर चर्चा पृष्ठ खोलते ही इस टूल को बाईं ओर के 'उपकरण' मेनू में जोड़ने हेतु अपने <code>common.js</code> में जोड़ें (यह आपके लॉगिन सत्र को स्वतः पहचान लेगा):
                         </p>
                         <div class="code-editor" style="height: 75px; padding: 8px; margin-bottom: 10px; font-size: 11.5px;" readonly>
 // [[विकिपीडिया:चर्चा समापन एवं पुरालेखण उपकरण]]
@@ -606,10 +599,9 @@ mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/Di
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button id="btn-dismiss-login-modal" class="btn btn-secondary btn-sm">बंद करें</button>
+                    <button id="btn-dismiss-login-modal" class="btn btn-secondary btn-sm">✕ बंद करें</button>
                 </div>
             </div>
-        </div>
         </div>
 
         <!-- 5. गतिविधि लॉग कंसोल -->
