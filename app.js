@@ -48,7 +48,7 @@
         theme: localStorage.getItem('da_theme') || 'light',
         activePreviewPayload: null,
         auth: {
-            username: localStorage.getItem('da_username') || '',
+            username: localStorage.getItem('da_wiki_user') || localStorage.getItem('da_username') || '',
             isLoggedIn: false,
             isAutoconfirmed: false,
             isBot: false,
@@ -390,19 +390,17 @@
         const autoconfirmedTag = res.isAutoconfirmed
             ? '<span class="badge-autoconfirmed">✅ स्वतः स्थापित (पात्र)</span>'
             : '<span class="badge-restricted">⚠️ अपात्र (न्यूनतम 4 दिन पुराना + 10 संपादन आवश्यक)</span>';
-        const globalEdits = res.central ? res.central.globalEditCount.toLocaleString('hi-IN') : '—';
-        const homeWiki = res.central && res.central.home ? res.central.home : 'hiwiki';
-        const sulLink = 'https://meta.wikimedia.org/wiki/Special:CentralAuth/' + encodeURIComponent(res.username);
+        const contribLink = 'https://hi.wikipedia.org/wiki/Special:Contributions/' + encodeURIComponent(res.username);
 
         resBox.style.display = 'block';
         resBox.innerHTML = `
             <div class="central-auth-card">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
                     <div style="display:flex; align-items:center; gap:8px;">
-                        <span class="user-avatar" style="width:32px; height:32px; font-size:14px;">${escapeHtml(res.username[0] || 'व')}</span>
+                        <span class="user-avatar" style="width:32px; height:32px; font-size:14px;">${escapeHtml((res.username[0] || 'व').toUpperCase())}</span>
                         <div>
                             <strong style="font-size:15px;">${escapeHtml(res.username)}</strong>
-                            ${res.central ? '<span class="badge-sul" style="margin-left:5px;">🌐 CentralAuth SUL</span>' : ''}
+                            <span class="badge-autoconfirmed" style="margin-left:5px;">✓ विकिपीडिया सदस्य</span>
                         </div>
                     </div>
                     ${autoconfirmedTag}
@@ -410,20 +408,20 @@
                 <div class="metric-grid">
                     <div class="metric-box">
                         <div class="metric-val">${res.editCount.toLocaleString('hi-IN')}</div>
-                        <div class="metric-lbl">🇮🇳 हिन्दी संपादन</div>
+                        <div class="metric-lbl">🇮🇳 संपादन संख्या</div>
                     </div>
                     <div class="metric-box">
-                        <div class="metric-val">${globalEdits}</div>
-                        <div class="metric-lbl">🌍 वैश्विक SUL</div>
+                        <div class="metric-val">${res.daysOld.toLocaleString('hi-IN')} दिन</div>
+                        <div class="metric-lbl">📅 खाता आयु</div>
                     </div>
                     <div class="metric-box">
-                        <div class="metric-val">${homeWiki}</div>
-                        <div class="metric-lbl">🏠 गृह विकि</div>
+                        <div class="metric-val">${res.isSysop ? 'प्रबंधक' : (res.isBot ? 'बॉट' : 'सदस्य')}</div>
+                        <div class="metric-lbl">🛡️ अधिकार स्थिति</div>
                     </div>
                 </div>
                 <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center; font-size:12px; flex-wrap:wrap; gap:8px;">
-                    <span class="text-muted">खाता आयु: <strong>${res.daysOld} दिन</strong> (${res.registration ? res.registration.split('T')[0] : '—'})</span>
-                    <a href="${sulLink}" target="_blank" class="link-btn">सेंट्रलऑथ प्रोफ़ाइल ↗</a>
+                    <span class="text-muted">पंजीकरण: <strong>${res.registration ? res.registration.split('T')[0] : '—'}</strong></span>
+                    <a href="${contribLink}" target="_blank" class="link-btn">📜 योगदान इतिहास (Contributions) ↗</a>
                 </div>
                 <div style="margin-top:12px; padding-top:10px; border-top:1px dashed var(--border-color); display:flex; justify-content:flex-end; gap:8px;">
                     <button type="button" id="btn-use-this-user" class="btn btn-primary btn-sm">
@@ -434,23 +432,26 @@
 
         if (res.isAutoconfirmed) {
             state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
-            updateAuthBadgeUI(state.auth);
+            localStorage.setItem('da_wiki_user', res.username);
             localStorage.setItem('da_username', res.username);
+            updateAccessControlUI(state.auth);
         }
 
         const useBtn = document.getElementById('btn-use-this-user');
         if (useBtn) {
             useBtn.addEventListener('click', () => {
                 state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
-                updateAuthBadgeUI(state.auth);
+                localStorage.setItem('da_wiki_user', res.username);
                 localStorage.setItem('da_username', res.username);
-                document.getElementById('login-modal').style.display = 'none';
-                logMessage('विकिमीडिया लॉगिन: <b>' + escapeHtml(res.username) + '</b> सक्रिय।', 'success');
+                updateAccessControlUI(state.auth);
+                const modal = document.getElementById('login-modal');
+                if (modal) modal.style.display = 'none';
+                logMessage('विकिपीडिया खाता <b>' + escapeHtml(res.username) + '</b> सक्रिय। उपकरण अनलॉक हो गया है।', 'success');
             });
         }
     }
 
-    // सदस्य न्यूनतम पात्रता एवं सेंट्रलऑथ सत्यापन
+    // सदस्य न्यूनतम पात्रता सत्यापन
     async function checkUserEligibility(username) {
         if (!username) return null;
         const cleanName = username.trim().replace(/^सदस्य:/i, '').replace(/^User:/i, '');
@@ -468,31 +469,34 @@
             const [data, central] = await Promise.all([localDataPromise, centralPromise]);
 
             const user = data.query && data.query.users ? data.query.users[0] : null;
-            if (!user || user.missing !== undefined) {
-                return { exists: false, username: cleanName, message: 'यह सदस्य नाम हिन्दी विकिपीडिया पर नहीं मिला।' };
+            const existsLocally = user && user.missing === undefined;
+            const existsGlobally = central && central.id;
+
+            if (!existsLocally && !existsGlobally) {
+                return { exists: false, username: cleanName, message: 'यह सदस्य नाम विकिपीडिया पर नहीं मिला।' };
             }
 
-            const groups = user.groups || [];
-            const rights = user.rights || [];
-            const editCount = user.editcount || 0;
-            const regDate = user.registration ? new Date(user.registration) : new Date(0);
-            const daysOld = user.registration ? Math.max(0, Math.floor((Date.now() - regDate.getTime()) / (1000 * 60 * 60 * 24))) : 999;
+            const groups = (user && user.groups) || (central && central.groups) || [];
+            const rights = (user && user.rights) || [];
+            const editCount = (user && user.editcount) || (central && central.globalEditCount) || 0;
+            const regDate = (user && user.registration) ? new Date(user.registration) : ((central && central.registration) ? new Date(central.registration) : new Date(0));
+            const daysOld = regDate.getTime() > 0 ? Math.max(0, Math.floor((Date.now() - regDate.getTime()) / (1000 * 60 * 60 * 24))) : 999;
 
             const hasGroup = groups.includes('autoconfirmed') || groups.includes('sysop') || groups.includes('bot') || groups.includes('rollbacker') || groups.includes('patroller');
             const hasRight = rights.includes('autoconfirmed');
             const meetsThreshold = (daysOld >= 4 && editCount >= 10);
-            const isAutoconfirmed = hasGroup || hasRight || meetsThreshold;
+            const isAutoconfirmed = hasGroup || hasRight || meetsThreshold || (central && central.globalEditCount >= 10);
 
             const isBot = groups.includes('bot') || cleanName.toLowerCase().endsWith('bot');
             const isSysop = groups.includes('sysop');
 
             return {
                 exists: true,
-                userid: user.userid,
+                userid: user ? user.userid : (central ? central.id : 0),
                 username: cleanName,
                 groups: groups,
                 editCount: editCount,
-                registration: user.registration || '',
+                registration: user && user.registration ? user.registration : (central ? central.registration : ''),
                 daysOld: daysOld,
                 isAutoconfirmed: isAutoconfirmed,
                 isBot: isBot,
@@ -505,36 +509,51 @@
         }
     }
 
-    function updateAuthBadgeUI(info) {
+    // एक्सेस कंट्रोल एवं हेडर बैज प्रबंधन (Access Control & Header UI)
+    function updateAccessControlUI(info) {
+        if (!info) info = state.auth;
+        const isAuth = !!(info && info.isLoggedIn && info.isAutoconfirmed);
+
+        const gateCard = document.getElementById('auth-gate-card');
+        const workspace = document.getElementById('tool-workspace');
         const pill = document.getElementById('logged-user-pill');
         const loginBtn = document.getElementById('btn-open-login');
 
-        if (!info || !info.isAutoconfirmed) {
-            pill.style.display = 'none';
-            loginBtn.style.display = 'inline-flex';
-            return;
-        }
+        if (isAuth) {
+            if (gateCard) gateCard.style.display = 'none';
+            if (workspace) workspace.style.display = 'block';
+            if (loginBtn) loginBtn.style.display = 'none';
+            if (pill) {
+                pill.style.display = 'inline-flex';
+                const nameEl = document.getElementById('logged-user-name');
+                if (nameEl) nameEl.textContent = info.username;
+                const avatarEl = document.getElementById('user-avatar-initial');
+                if (avatarEl) avatarEl.textContent = (info.username[0] || 'व').toUpperCase();
 
-        // यदि सत्यापित है:
-        loginBtn.style.display = 'none';
-        pill.style.display = 'inline-flex';
-        document.getElementById('logged-user-name').textContent = info.username;
-        document.getElementById('user-avatar-initial').textContent = info.username[0] || 'व';
-
-        const badgeEl = document.getElementById('logged-user-badge');
-        if (info.isBot) {
-            badgeEl.className = 'badge-bot';
-            badgeEl.textContent = '🤖 बॉट';
-        } else if (info.isSysop) {
-            badgeEl.className = 'badge-sysop';
-            badgeEl.textContent = '🛡️ प्रबंधक';
-        } else if (info.central && info.central.isUnified) {
-            badgeEl.className = 'badge-sul';
-            badgeEl.textContent = '🌐 सेंट्रल SUL';
+                const badgeEl = document.getElementById('logged-user-badge');
+                if (badgeEl) {
+                    if (info.isBot) {
+                        badgeEl.className = 'badge-bot';
+                        badgeEl.textContent = '🤖 बॉट';
+                    } else if (info.isSysop) {
+                        badgeEl.className = 'badge-sysop';
+                        badgeEl.textContent = '🛡️ प्रबंधक';
+                    } else {
+                        badgeEl.className = 'badge-autoconfirmed';
+                        badgeEl.textContent = '✓ विकिपीडिया खाता';
+                    }
+                }
+            }
         } else {
-            badgeEl.className = 'badge-autoconfirmed';
-            badgeEl.textContent = '✓ स्वतःस्थापित';
+            if (gateCard) gateCard.style.display = 'block';
+            if (workspace) workspace.style.display = 'none';
+            if (loginBtn) loginBtn.style.display = 'inline-flex';
+            if (pill) pill.style.display = 'none';
         }
+    }
+
+    function updateAuthBadgeUI(info) {
+        updateAccessControlUI(info);
     }
 
     function openLoginModal(tabId = 'ltab-verify') {
@@ -1223,6 +1242,12 @@
             modalTabs.style.display = 'none';
         }
 
+        const userBadge = document.getElementById('modal-user-attribution-badge');
+        if (userBadge) {
+            const uName = state.auth.username || 'अज्ञात';
+            userBadge.innerHTML = `👤 <strong>संपादन कर्ता:</strong> <a href="https://hi.wikipedia.org/wiki/Special:Contributions/${encodeURIComponent(uName)}" target="_blank" class="link-btn">सदस्य:${escapeHtml(uName)} (योगदान देखें ↗)</a> &nbsp;|&nbsp; <em>यह संपादन सीधे आपके विकिपीडिया खाते के योगदान (Contributions) में जुड़ेगा।</em>`;
+        }
+
         const wikiEditBtn = document.getElementById('btn-open-wiki-edit');
         wikiEditBtn.href = `https://hi.wikipedia.org/w/index.php?title=${encodeURIComponent(opts.targetPage)}&action=edit`;
         wikiEditBtn.textContent = 'विकिपीडिया पर संपादन खोलें ↗';
@@ -1305,28 +1330,82 @@
             });
         });
 
-        // 4. पात्रता व सेंट्रलऑथ सत्यापन
+        // 4. लॉगिन गेट Buton एवं सत्यापन
+        const gateLoginBtn = document.getElementById('btn-gate-login');
+        if (gateLoginBtn) {
+            gateLoginBtn.addEventListener('click', async () => {
+                const uInput = (document.getElementById('gate-username-input').value || '').trim();
+                if (!uInput) {
+                    alert('कृपया विकिपीडिया सदस्य नाम दर्ज करें।');
+                    return;
+                }
+                const resBox = document.getElementById('gate-verification-result');
+                if (resBox) {
+                    resBox.style.display = 'block';
+                    resBox.innerHTML = '<span class="text-muted">⏳ विकिपीडिया से खाता जाँचा जा रहा है...</span>';
+                }
+                gateLoginBtn.disabled = true;
+                gateLoginBtn.textContent = '⏳ जाँच हो रही है...';
+
+                const res = await checkUserEligibility(uInput);
+                gateLoginBtn.disabled = false;
+                gateLoginBtn.textContent = '✓ खाता जोड़ें व टूल अनलॉक करें';
+
+                if (!res || !res.exists) {
+                    if (resBox) resBox.innerHTML = `<div class="security-box danger">❌ सदस्य "${escapeHtml(uInput)}" विकिपीडिया पर नहीं मिला। कृपया सही सदस्य नाम दर्ज करें।</div>`;
+                    return;
+                }
+
+                if (!res.isAutoconfirmed) {
+                    if (resBox) resBox.innerHTML = `<div class="security-box danger">⚠️ सदस्य "${escapeHtml(res.username)}" अभी स्वतःस्थापित (Autoconfirmed) नहीं है। न्यूनतम 4 दिन पुराना खाता और 10 संपादन आवश्यक हैं।</div>`;
+                    return;
+                }
+
+                state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
+                localStorage.setItem('da_wiki_user', res.username);
+                localStorage.setItem('da_username', res.username);
+                updateAccessControlUI(state.auth);
+                logMessage(`विकिपीडिया खाता <b>${escapeHtml(res.username)}</b> सफलतापूर्वक जुड़ा। उपकरण अनलॉक हो गया है!`, 'success');
+
+                const initialTarget = (new URLSearchParams(window.location.search)).get('page') || 'विकिपीडिया:चौपाल';
+                const pageInp = document.getElementById('page-input');
+                if (pageInp) pageInp.value = initialTarget;
+                loadPage(initialTarget);
+            });
+        }
+
+        const gateInput = document.getElementById('gate-username-input');
+        if (gateInput) {
+            gateInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    if (gateLoginBtn) gateLoginBtn.click();
+                }
+            });
+        }
+
         const checkEligBtn = document.getElementById('btn-check-user-eligibility');
         if (checkEligBtn) {
             checkEligBtn.addEventListener('click', async () => {
                 const uInput = document.getElementById('verify-username-input').value.trim();
                 if (!uInput) {
-                    alert('कृपया विकिमीडिया सदस्य नाम दर्ज करें।');
+                    alert('कृपया विकिपीडिया सदस्य नाम दर्ज करें।');
                     return;
                 }
 
                 const resBox = document.getElementById('verification-result-box');
-                resBox.style.display = 'block';
-                resBox.innerHTML = '<div style="padding:10px; text-align:center;"><span class="text-muted">⏳ विकिमीडिया सेंट्रलऑथ (meta.wikimedia.org) एवं हिन्दी विकिपीडिया से जानकारी सत्यापित की जा रही है...</span></div>';
+                if (resBox) {
+                    resBox.style.display = 'block';
+                    resBox.innerHTML = '<div style="padding:10px; text-align:center;"><span class="text-muted">⏳ विकिपीडिया से जानकारी जाँची जा रही है...</span></div>';
+                }
 
                 const res = await checkUserEligibility(uInput);
                 if (!res || !res.exists) {
-                    resBox.innerHTML = `<div class="security-box danger">❌ <strong>त्रुटि:</strong> ${res ? escapeHtml(res.message || res.error) : 'यह सदस्य नाम विकिमीडिया पर नहीं मिला।'}</div>`;
+                    if (resBox) resBox.innerHTML = `<div class="security-box danger">❌ <strong>त्रुटि:</strong> ${res ? escapeHtml(res.message || res.error) : 'यह सदस्य नाम विकिपीडिया पर नहीं मिला।'}</div>`;
                     return;
                 }
 
                 renderVerificationCard(res, resBox);
-                logMessage(`विकिमीडिया सदस्य <b>${escapeHtml(res.username)}</b> सत्यापित।`, 'success');
+                logMessage(`विकिपीडिया सदस्य <b>${escapeHtml(res.username)}</b> सत्यापित।`, 'success');
             });
         }
 
@@ -1334,13 +1413,14 @@
         const logoutBtn = document.getElementById('btn-logout');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => {
+                localStorage.removeItem('da_wiki_user');
                 localStorage.removeItem('da_username');
                 state.auth.isAutoconfirmed = false;
                 state.auth.isLoggedIn = false;
                 state.auth.username = '';
                 state.auth.verified = false;
-                updateAuthBadgeUI(null);
-                logMessage('सत्र समाप्त (लॉगआउट)।', 'info');
+                updateAccessControlUI(state.auth);
+                logMessage('सत्र समाप्त (लॉगआउट)। उपकरण लॉक हो गया है।', 'info');
             });
         }
 
@@ -1766,33 +1846,33 @@
             });
         }
 
-        // 16. प्रारंभिक URL पैरामीटर्स एवं सदस्य सत्यापन (?page=...&user=...)
+        // 16. प्रारंभिक URL पैरामीटर्स एवं स्वतः लॉगिन (?page=...&user=...)
         const urlParams = new URLSearchParams(window.location.search);
         const queryPage = urlParams.get('page');
         const queryUser = urlParams.get('user');
-
-        if (queryUser) {
-            checkUserEligibility(queryUser).then(res => {
-                if (res && res.exists) {
-                    state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
-                    localStorage.setItem('da_username', res.username);
-                    updateAuthBadgeUI(state.auth);
-                    logMessage(`सेंट्रलऑथ स्वतः सत्यापन: <b>${escapeHtml(res.username)}</b> सक्रिय हुआ।`, 'success');
-                }
-            });
-        } else if (state.auth.username) {
-            checkUserEligibility(state.auth.username).then(res => {
-                if (res && res.exists) {
-                    state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
-                    updateAuthBadgeUI(state.auth);
-                }
-            });
-        }
-
+        const candidateUser = queryUser || state.auth.username;
         const initialTarget = queryPage || 'विकिपीडिया:चौपाल';
         const pageInp = document.getElementById('page-input');
         if (pageInp) pageInp.value = initialTarget;
-        loadPage(initialTarget);
+
+        if (candidateUser) {
+            checkUserEligibility(candidateUser).then(res => {
+                if (res && res.exists && res.isAutoconfirmed) {
+                    state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
+                    localStorage.setItem('da_wiki_user', res.username);
+                    localStorage.setItem('da_username', res.username);
+                    updateAccessControlUI(state.auth);
+                    logMessage(`विकिपीडिया खाता <b>${escapeHtml(res.username)}</b> सक्रिय। उपकरण अनलॉक हो गया है।`, 'success');
+                    loadPage(initialTarget);
+                } else {
+                    updateAccessControlUI(state.auth);
+                }
+            }).catch(() => {
+                updateAccessControlUI(state.auth);
+            });
+        } else {
+            updateAccessControlUI(state.auth);
+        }
     });
 
 })();

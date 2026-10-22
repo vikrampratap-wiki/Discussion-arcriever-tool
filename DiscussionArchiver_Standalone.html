@@ -995,7 +995,7 @@ body {
     animation: pulse 1.6s infinite;
 }
 
-.badge-sul {
+.badge-sul, .badge-wiki {
     background: #e0f2fe;
     color: #0369a1;
     border: 1px solid #bae6fd;
@@ -1003,6 +1003,15 @@ body {
     border-radius: 12px;
     font-size: 11px;
     font-weight: 700;
+}
+
+.auth-gate-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-top: 4px solid var(--primary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    margin-bottom: 24px;
 }
 
 .btn-wikimedia {
@@ -1084,15 +1093,14 @@ body {
             </div>
             <div class="header-actions">
                 <div id="auth-status-container" class="user-badge-container">
-                    <button id="btn-open-login" class="btn btn-wikimedia btn-sm" title="विकिमीडिया सेंट्रल लॉगिन (CentralAuth SUL)">
-                        🌐 विकिमीडिया सेंट्रल लॉगिन
+                    <button id="btn-open-login" class="btn btn-wikimedia btn-sm" title="विकिपीडिया खाते से लॉगिन करें">
+                        🔐 विकिपीडिया लॉगिन
                     </button>
                     <div id="logged-user-pill" class="user-pill" style="display:none;">
                         <span class="user-avatar" id="user-avatar-initial">व</span>
                         <span id="logged-user-name">सदस्य</span>
-                        <span id="logged-user-badge" class="badge-sul">🌐 सेंट्रल SUL</span>
-                        <button id="btn-switch-user" class="btn btn-outline btn-xs" title="सेंट्रल प्रोफ़ाइल व सदस्य बदलें" style="padding:2px 7px; font-size:11px;">👤 खाता</button>
-                        <button id="btn-logout" class="btn btn-outline btn-xs" title="लॉगआउट" style="padding:2px 6px; font-size:11px;">✕</button>
+                        <span id="logged-user-badge" class="badge-autoconfirmed">✓ विकिपीडिया खाता</span>
+                        <button id="btn-logout" class="btn btn-outline btn-xs" title="लॉगआउट / खाता बदलें" style="padding:2px 8px; font-size:11px;">🚪 लॉगआउट</button>
                     </div>
                 </div>
                 <button id="theme-toggle-btn" class="btn btn-secondary btn-sm" title="डार्क/लाइट मोड बदलें">🌓</button>
@@ -1102,6 +1110,56 @@ body {
     </header>
 
     <main class="main-content container">
+        <!-- अनाधिकृत / लॉगिन गेट कार्ड (Access restricted until logged in) -->
+        <section id="auth-gate-card" class="card auth-gate-card" style="display: none; padding: 32px 24px;">
+            <div style="max-width: 640px; margin: 0 auto; text-align: center;">
+                <div style="font-size: 46px; margin-bottom: 12px;">🔐</div>
+                <h2 style="margin-bottom: 10px; font-size: 22px;">उपकरण उपयोग हेतु विकिपीडिया लॉगिन अनिवार्य</h2>
+                <p class="text-secondary" style="font-size: 14px; line-height: 1.6; margin-bottom: 22px;">
+                    हिन्दी विकिपीडिया पर चर्चा समापन अथवा पुरालेखन करने हेतु विकिपीडिया खाते से लॉगिन होना आवश्यक है, जिससे आपके द्वारा किए गए सभी संपादन सीधे आपके विकिपीडिया खाते के <strong>योगदान (Contributions)</strong> में दर्ज हों।
+                </p>
+
+                <div style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 18px; margin-bottom: 20px; text-align: left;">
+                    <h4 style="margin: 0 0 10px 0; font-size: 14px; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+                        <span>1️⃣</span> विकिपीडिया पर आधिकारिक लॉगिन करें:
+                    </h4>
+                    <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5;">
+                        यदि आप विकिपीडिया पर पहले से लॉगिन नहीं हैं, तो नीचे बटन पर क्लिक करके लॉगिन करें (पासवर्ड केवल आधिकारिक विकिपीडिया सर्वर पर ही दिया जाता है):
+                    </p>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px;">
+                        <a href="https://hi.wikipedia.org/w/index.php?title=Special:UserLogin&returnto=Special:MyPage" target="_blank" class="btn btn-wikimedia btn-sm" style="text-decoration: none;">
+                            🚀 विकिपीडिया लॉगिन पृष्ठ खोलें ↗
+                        </a>
+                        <a href="https://hi.wikipedia.org/wiki/Special:MyPage" target="_blank" class="link-btn" title="देखें कि वर्तमान में विकिपीडिया पर कौन सा खाता सक्रिय है">
+                            🔍 सक्रिय खाता जाँचें (Special:MyPage) ↗
+                        </a>
+                    </div>
+
+                    <h4 style="margin: 14px 0 8px 0; font-size: 14px; color: var(--text-primary); display: flex; align-items: center; gap: 6px; border-top: 1px dashed var(--border-color); padding-top: 14px;">
+                        <span>2️⃣</span> अपना विकिपीडिया सदस्य नाम दर्ज करें:
+                    </h4>
+                    <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 10px;">
+                        यह केवल <strong>एक बार</strong> करना होता है। उपकरण इसे इस ब्राउज़र में सुरक्षित याद रखेगा ताकि आपको बार-बार अपना नाम या पासवर्ड न देना पड़े:
+                    </p>
+                    <div class="input-with-button">
+                        <input type="text" id="gate-username-input" class="form-control" placeholder="उदा: विक्रम प्रताप अथवा Vikram pratap" />
+                        <button id="btn-gate-login" class="btn btn-primary" style="white-space: nowrap;">
+                            ✓ खाता जोड़ें व टूल अनलॉक करें
+                        </button>
+                    </div>
+                    <div id="gate-verification-result" style="display: none; margin-top: 10px;"></div>
+                </div>
+
+                <div style="border-top: 1px solid var(--border-color); padding-top: 16px; text-align: left; font-size: 12.5px; color: var(--text-muted); line-height: 1.6;">
+                    <strong>⚡ आसान विकिपीडिया एकीकरण (Zero-Login):</strong> अपने विकिपीडिया <a href="https://hi.wikipedia.org/wiki/Special:MyPage/common.js" target="_blank" class="link-btn">common.js</a> में निम्न पंक्ति जोड़ें:<br>
+                    <code style="display: block; background: var(--bg-primary); padding: 6px 10px; border-radius: 4px; margin: 6px 0; font-size: 11.5px; border: 1px solid var(--border-subtle);">mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/DiscussionArchiver.js');</code>
+                    इसके बाद विकिपीडिया पर चर्चा पृष्ठ खोलते ही बाईं ओर के 'उपकरण' मेनू से यह टूल अपने आप आपके खाते के साथ 1-क्लिक में खुल जाएगा।
+                </div>
+            </div>
+        </section>
+
+        <!-- कार्यक्षेत्र (केवल लॉगिन होने पर ही अनलॉक) -->
+        <div id="tool-workspace" style="display: none;">
         <!-- 1. शीर्ष नियंत्रण पटल: पृष्ठ चयन एवं लोडिंग -->
         <section class="card control-card">
             <div class="form-row">
@@ -1487,7 +1545,7 @@ body {
                             विकिमीडिया सुरक्षा नीतियों के अनुसार किसी भी बाह्य/तृतीय-पक्ष उपकरण में विकिपीडिया पासवर्ड कभी नहीं मांगना चाहिए।
                         </p>
                         <p class="setting-desc" style="line-height: 1.6;">
-                            यह उपकरण <strong>पूर्णतः पासवर्ड-रहित</strong> है। यह केवल विकिमीडिया सेंट्रलऑथ (CentralAuth SUL) के आधिकारिक सार्वजनिक API से आपके खाते की स्थिति व पात्रता की पुष्टि करता है।
+                            यह उपकरण <strong>पूर्णतः पासवर्ड-रहित</strong> है। यह केवल विकिपीडिया के आधिकारिक सार्वजनिक API से आपके खाते की स्थिति व पात्रता की पुष्टि करता है।
                         </p>
                     </div>
                 </div>
@@ -1562,6 +1620,7 @@ body {
                 </div>
             </div>
         </section>
+        </div> <!-- /tool-workspace -->
 
         <!-- 4. पूर्वावलोकन / आउटपुट मोडल / बॉक्स -->
         <div id="preview-modal" class="modal-overlay" style="display: none;">
@@ -1571,6 +1630,7 @@ body {
                     <button id="btn-close-modal" class="modal-close-btn">&times;</button>
                 </div>
                 <div class="modal-body">
+                    <div id="modal-user-attribution-badge" class="security-box success" style="margin-bottom: 10px; font-size: 12.5px;"></div>
                     <div id="modal-summary-badge" class="modal-summary-badge"></div>
                     <div id="modal-tabs" class="preview-tabs" style="display: none;">
                         <button class="preview-tab-btn active" data-ptab="p-source">मूल पृष्ठ विकिटेक्स्ट</button>
@@ -1605,24 +1665,24 @@ body {
             </div>
         </div>
 
-        <!-- 4.1 विकिमीडिया सेंट्रल लॉगिन एवं प्रोफ़ाइल मोडल -->
+        <!-- 4.1 विकिमीडिया लॉगिन एवं प्रोफ़ाइल मोडल -->
         <div id="login-modal" class="modal-overlay" style="display: none;">
             <div class="modal-dialog" style="max-width: 620px;">
                 <div class="modal-header">
-                    <h3 class="modal-title">🌐 विकिमीडिया सेंट्रल लॉगिन (CentralAuth SUL एवं खाता सत्यापन)</h3>
+                    <h3 class="modal-title">🔐 विकिपीडिया खाता लॉगिन एवं सदस्य परिवर्तन</h3>
                     <button id="btn-close-login-modal" class="modal-close-btn" title="मोडल बंद करें">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="security-box success" style="margin-bottom: 12px; font-size: 12.5px; line-height: 1.5;">
-                        <strong>🔒 100% सुरक्षित एवं पासवर्ड-रहित (Password-Free):</strong> यह उपकरण आपके विकिपीडिया पासवर्ड की कभी भी मांग नहीं करता है। आपका खाता सत्यापन सीधे आधिकारिक विकिमीडिया सर्वर (<code>meta.wikimedia.org</code> / <code>hi.wikipedia.org</code>) से प्राप्त किया जाता है और संपादन आपके ब्राउज़र के आधिकारिक विकिपीडिया सत्र द्वारा सुरक्षित होते हैं।
+                        <strong>🔒 100% सुरक्षित एवं पासवर्ड-रहित (Password-Free):</strong> यह उपकरण आपके विकिपीडिया पासवर्ड की कभी भी मांग नहीं करता है। आपका खाता सत्यापन सीधे आधिकारिक विकिमीडिया सर्वर से प्राप्त किया जाता है और संपादन आपके ब्राउज़र के आधिकारिक विकिपीडिया सत्र द्वारा सुरक्षित होते हैं।
                     </div>
 
                     <div class="preview-tabs">
-                        <button class="preview-tab-btn active" data-ltab="ltab-verify">🌐 विकिमीडिया लॉगिन एवं सत्यापन (CentralAuth)</button>
+                        <button class="preview-tab-btn active" data-ltab="ltab-verify">🌐 विकिपीडिया खाता लॉगिन</button>
                         <button class="preview-tab-btn" data-ltab="ltab-gadget">⚡ विकिपीडिया गैजेट (1-क्लिक स्वतः लॉगिन)</button>
                     </div>
 
-                    <!-- सेंट्रलऑथ प्रोफ़ाइल व सत्यापन टैब -->
+                    <!-- खाता सत्यापन टैब -->
                     <div id="ltab-verify" class="login-tab-pane active" style="padding-top: 10px;">
                         <!-- चरण 1: विकिमीडिया लॉगिन -->
                         <div class="wiki-auth-step-box" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:6px; padding:12px; margin-bottom:12px;">
@@ -1630,7 +1690,7 @@ body {
                                 <span>1️⃣</span> आधिकारिक विकिमीडिया लॉगिन:
                             </div>
                             <p style="margin:0 0 10px 0; font-size:12px; color:var(--text-secondary); line-height:1.5;">
-                                विकिपीडिया पर चर्चा समापन अथवा पुरालेखन करने हेतु विकिपीडिया पर आपका लॉगिन होना अनिवार्य है।
+                                विकिपीडिया पर चर्चा समापन अथवा पुरालेखन करने हेतु विकिपीडिया पर आपका लॉगिन होना अनिवार्य है ताकि संपादन आपके खाते में जुड़े।
                             </p>
                             <div style="display:flex; gap:8px; flex-wrap:wrap;">
                                 <a href="https://hi.wikipedia.org/w/index.php?title=Special:UserLogin&returnto=Special:MyPage" target="_blank" id="btn-goto-wiki-login" class="btn btn-wikimedia btn-sm" style="text-decoration:none;">
@@ -1645,7 +1705,7 @@ body {
                         <!-- चरण 2: सदस्य नाम व पात्रता सत्यापन -->
                         <div class="wiki-auth-step-box" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:6px; padding:12px; margin-bottom:10px;">
                             <div style="font-weight:600; font-size:13.5px; margin-bottom:6px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
-                                <span>2️⃣</span> सदस्य नाम एवं पात्रता (CentralAuth SUL) सत्यापन:
+                                <span>2️⃣</span> सदस्य नाम सत्यापन:
                             </div>
                             <p style="margin:0 0 8px 0; font-size:12px; color:var(--text-secondary); line-height:1.4;">
                                 विकिमीडिया पर लॉगिन के बाद अपना सदस्य नाम दर्ज करें ताकि टूल आपकी पात्रता (स्वतःस्थापित सदस्य) की पुष्टि कर सके:
@@ -1755,7 +1815,7 @@ mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/Di
         theme: localStorage.getItem('da_theme') || 'light',
         activePreviewPayload: null,
         auth: {
-            username: localStorage.getItem('da_username') || '',
+            username: localStorage.getItem('da_wiki_user') || localStorage.getItem('da_username') || '',
             isLoggedIn: false,
             isAutoconfirmed: false,
             isBot: false,
@@ -2097,19 +2157,17 @@ mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/Di
         const autoconfirmedTag = res.isAutoconfirmed
             ? '<span class="badge-autoconfirmed">✅ स्वतः स्थापित (पात्र)</span>'
             : '<span class="badge-restricted">⚠️ अपात्र (न्यूनतम 4 दिन पुराना + 10 संपादन आवश्यक)</span>';
-        const globalEdits = res.central ? res.central.globalEditCount.toLocaleString('hi-IN') : '—';
-        const homeWiki = res.central && res.central.home ? res.central.home : 'hiwiki';
-        const sulLink = 'https://meta.wikimedia.org/wiki/Special:CentralAuth/' + encodeURIComponent(res.username);
+        const contribLink = 'https://hi.wikipedia.org/wiki/Special:Contributions/' + encodeURIComponent(res.username);
 
         resBox.style.display = 'block';
         resBox.innerHTML = `
             <div class="central-auth-card">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
                     <div style="display:flex; align-items:center; gap:8px;">
-                        <span class="user-avatar" style="width:32px; height:32px; font-size:14px;">${escapeHtml(res.username[0] || 'व')}</span>
+                        <span class="user-avatar" style="width:32px; height:32px; font-size:14px;">${escapeHtml((res.username[0] || 'व').toUpperCase())}</span>
                         <div>
                             <strong style="font-size:15px;">${escapeHtml(res.username)}</strong>
-                            ${res.central ? '<span class="badge-sul" style="margin-left:5px;">🌐 CentralAuth SUL</span>' : ''}
+                            <span class="badge-autoconfirmed" style="margin-left:5px;">✓ विकिपीडिया सदस्य</span>
                         </div>
                     </div>
                     ${autoconfirmedTag}
@@ -2117,20 +2175,20 @@ mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/Di
                 <div class="metric-grid">
                     <div class="metric-box">
                         <div class="metric-val">${res.editCount.toLocaleString('hi-IN')}</div>
-                        <div class="metric-lbl">🇮🇳 हिन्दी संपादन</div>
+                        <div class="metric-lbl">🇮🇳 संपादन संख्या</div>
                     </div>
                     <div class="metric-box">
-                        <div class="metric-val">${globalEdits}</div>
-                        <div class="metric-lbl">🌍 वैश्विक SUL</div>
+                        <div class="metric-val">${res.daysOld.toLocaleString('hi-IN')} दिन</div>
+                        <div class="metric-lbl">📅 खाता आयु</div>
                     </div>
                     <div class="metric-box">
-                        <div class="metric-val">${homeWiki}</div>
-                        <div class="metric-lbl">🏠 गृह विकि</div>
+                        <div class="metric-val">${res.isSysop ? 'प्रबंधक' : (res.isBot ? 'बॉट' : 'सदस्य')}</div>
+                        <div class="metric-lbl">🛡️ अधिकार स्थिति</div>
                     </div>
                 </div>
                 <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center; font-size:12px; flex-wrap:wrap; gap:8px;">
-                    <span class="text-muted">खाता आयु: <strong>${res.daysOld} दिन</strong> (${res.registration ? res.registration.split('T')[0] : '—'})</span>
-                    <a href="${sulLink}" target="_blank" class="link-btn">सेंट्रलऑथ प्रोफ़ाइल ↗</a>
+                    <span class="text-muted">पंजीकरण: <strong>${res.registration ? res.registration.split('T')[0] : '—'}</strong></span>
+                    <a href="${contribLink}" target="_blank" class="link-btn">📜 योगदान इतिहास (Contributions) ↗</a>
                 </div>
                 <div style="margin-top:12px; padding-top:10px; border-top:1px dashed var(--border-color); display:flex; justify-content:flex-end; gap:8px;">
                     <button type="button" id="btn-use-this-user" class="btn btn-primary btn-sm">
@@ -2141,23 +2199,26 @@ mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/Di
 
         if (res.isAutoconfirmed) {
             state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
-            updateAuthBadgeUI(state.auth);
+            localStorage.setItem('da_wiki_user', res.username);
             localStorage.setItem('da_username', res.username);
+            updateAccessControlUI(state.auth);
         }
 
         const useBtn = document.getElementById('btn-use-this-user');
         if (useBtn) {
             useBtn.addEventListener('click', () => {
                 state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
-                updateAuthBadgeUI(state.auth);
+                localStorage.setItem('da_wiki_user', res.username);
                 localStorage.setItem('da_username', res.username);
-                document.getElementById('login-modal').style.display = 'none';
-                logMessage('विकिमीडिया लॉगिन: <b>' + escapeHtml(res.username) + '</b> सक्रिय।', 'success');
+                updateAccessControlUI(state.auth);
+                const modal = document.getElementById('login-modal');
+                if (modal) modal.style.display = 'none';
+                logMessage('विकिपीडिया खाता <b>' + escapeHtml(res.username) + '</b> सक्रिय। उपकरण अनलॉक हो गया है।', 'success');
             });
         }
     }
 
-    // सदस्य न्यूनतम पात्रता एवं सेंट्रलऑथ सत्यापन
+    // सदस्य न्यूनतम पात्रता सत्यापन
     async function checkUserEligibility(username) {
         if (!username) return null;
         const cleanName = username.trim().replace(/^सदस्य:/i, '').replace(/^User:/i, '');
@@ -2175,31 +2236,34 @@ mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/Di
             const [data, central] = await Promise.all([localDataPromise, centralPromise]);
 
             const user = data.query && data.query.users ? data.query.users[0] : null;
-            if (!user || user.missing !== undefined) {
-                return { exists: false, username: cleanName, message: 'यह सदस्य नाम हिन्दी विकिपीडिया पर नहीं मिला।' };
+            const existsLocally = user && user.missing === undefined;
+            const existsGlobally = central && central.id;
+
+            if (!existsLocally && !existsGlobally) {
+                return { exists: false, username: cleanName, message: 'यह सदस्य नाम विकिपीडिया पर नहीं मिला।' };
             }
 
-            const groups = user.groups || [];
-            const rights = user.rights || [];
-            const editCount = user.editcount || 0;
-            const regDate = user.registration ? new Date(user.registration) : new Date(0);
-            const daysOld = user.registration ? Math.max(0, Math.floor((Date.now() - regDate.getTime()) / (1000 * 60 * 60 * 24))) : 999;
+            const groups = (user && user.groups) || (central && central.groups) || [];
+            const rights = (user && user.rights) || [];
+            const editCount = (user && user.editcount) || (central && central.globalEditCount) || 0;
+            const regDate = (user && user.registration) ? new Date(user.registration) : ((central && central.registration) ? new Date(central.registration) : new Date(0));
+            const daysOld = regDate.getTime() > 0 ? Math.max(0, Math.floor((Date.now() - regDate.getTime()) / (1000 * 60 * 60 * 24))) : 999;
 
             const hasGroup = groups.includes('autoconfirmed') || groups.includes('sysop') || groups.includes('bot') || groups.includes('rollbacker') || groups.includes('patroller');
             const hasRight = rights.includes('autoconfirmed');
             const meetsThreshold = (daysOld >= 4 && editCount >= 10);
-            const isAutoconfirmed = hasGroup || hasRight || meetsThreshold;
+            const isAutoconfirmed = hasGroup || hasRight || meetsThreshold || (central && central.globalEditCount >= 10);
 
             const isBot = groups.includes('bot') || cleanName.toLowerCase().endsWith('bot');
             const isSysop = groups.includes('sysop');
 
             return {
                 exists: true,
-                userid: user.userid,
+                userid: user ? user.userid : (central ? central.id : 0),
                 username: cleanName,
                 groups: groups,
                 editCount: editCount,
-                registration: user.registration || '',
+                registration: user && user.registration ? user.registration : (central ? central.registration : ''),
                 daysOld: daysOld,
                 isAutoconfirmed: isAutoconfirmed,
                 isBot: isBot,
@@ -2212,36 +2276,51 @@ mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/Di
         }
     }
 
-    function updateAuthBadgeUI(info) {
+    // एक्सेस कंट्रोल एवं हेडर बैज प्रबंधन (Access Control & Header UI)
+    function updateAccessControlUI(info) {
+        if (!info) info = state.auth;
+        const isAuth = !!(info && info.isLoggedIn && info.isAutoconfirmed);
+
+        const gateCard = document.getElementById('auth-gate-card');
+        const workspace = document.getElementById('tool-workspace');
         const pill = document.getElementById('logged-user-pill');
         const loginBtn = document.getElementById('btn-open-login');
 
-        if (!info || !info.isAutoconfirmed) {
-            pill.style.display = 'none';
-            loginBtn.style.display = 'inline-flex';
-            return;
-        }
+        if (isAuth) {
+            if (gateCard) gateCard.style.display = 'none';
+            if (workspace) workspace.style.display = 'block';
+            if (loginBtn) loginBtn.style.display = 'none';
+            if (pill) {
+                pill.style.display = 'inline-flex';
+                const nameEl = document.getElementById('logged-user-name');
+                if (nameEl) nameEl.textContent = info.username;
+                const avatarEl = document.getElementById('user-avatar-initial');
+                if (avatarEl) avatarEl.textContent = (info.username[0] || 'व').toUpperCase();
 
-        // यदि सत्यापित है:
-        loginBtn.style.display = 'none';
-        pill.style.display = 'inline-flex';
-        document.getElementById('logged-user-name').textContent = info.username;
-        document.getElementById('user-avatar-initial').textContent = info.username[0] || 'व';
-
-        const badgeEl = document.getElementById('logged-user-badge');
-        if (info.isBot) {
-            badgeEl.className = 'badge-bot';
-            badgeEl.textContent = '🤖 बॉट';
-        } else if (info.isSysop) {
-            badgeEl.className = 'badge-sysop';
-            badgeEl.textContent = '🛡️ प्रबंधक';
-        } else if (info.central && info.central.isUnified) {
-            badgeEl.className = 'badge-sul';
-            badgeEl.textContent = '🌐 सेंट्रल SUL';
+                const badgeEl = document.getElementById('logged-user-badge');
+                if (badgeEl) {
+                    if (info.isBot) {
+                        badgeEl.className = 'badge-bot';
+                        badgeEl.textContent = '🤖 बॉट';
+                    } else if (info.isSysop) {
+                        badgeEl.className = 'badge-sysop';
+                        badgeEl.textContent = '🛡️ प्रबंधक';
+                    } else {
+                        badgeEl.className = 'badge-autoconfirmed';
+                        badgeEl.textContent = '✓ विकिपीडिया खाता';
+                    }
+                }
+            }
         } else {
-            badgeEl.className = 'badge-autoconfirmed';
-            badgeEl.textContent = '✓ स्वतःस्थापित';
+            if (gateCard) gateCard.style.display = 'block';
+            if (workspace) workspace.style.display = 'none';
+            if (loginBtn) loginBtn.style.display = 'inline-flex';
+            if (pill) pill.style.display = 'none';
         }
+    }
+
+    function updateAuthBadgeUI(info) {
+        updateAccessControlUI(info);
     }
 
     function openLoginModal(tabId = 'ltab-verify') {
@@ -2930,6 +3009,12 @@ mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/Di
             modalTabs.style.display = 'none';
         }
 
+        const userBadge = document.getElementById('modal-user-attribution-badge');
+        if (userBadge) {
+            const uName = state.auth.username || 'अज्ञात';
+            userBadge.innerHTML = `👤 <strong>संपादन कर्ता:</strong> <a href="https://hi.wikipedia.org/wiki/Special:Contributions/${encodeURIComponent(uName)}" target="_blank" class="link-btn">सदस्य:${escapeHtml(uName)} (योगदान देखें ↗)</a> &nbsp;|&nbsp; <em>यह संपादन सीधे आपके विकिपीडिया खाते के योगदान (Contributions) में जुड़ेगा।</em>`;
+        }
+
         const wikiEditBtn = document.getElementById('btn-open-wiki-edit');
         wikiEditBtn.href = `https://hi.wikipedia.org/w/index.php?title=${encodeURIComponent(opts.targetPage)}&action=edit`;
         wikiEditBtn.textContent = 'विकिपीडिया पर संपादन खोलें ↗';
@@ -3012,28 +3097,82 @@ mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/Di
             });
         });
 
-        // 4. पात्रता व सेंट्रलऑथ सत्यापन
+        // 4. लॉगिन गेट Buton एवं सत्यापन
+        const gateLoginBtn = document.getElementById('btn-gate-login');
+        if (gateLoginBtn) {
+            gateLoginBtn.addEventListener('click', async () => {
+                const uInput = (document.getElementById('gate-username-input').value || '').trim();
+                if (!uInput) {
+                    alert('कृपया विकिपीडिया सदस्य नाम दर्ज करें।');
+                    return;
+                }
+                const resBox = document.getElementById('gate-verification-result');
+                if (resBox) {
+                    resBox.style.display = 'block';
+                    resBox.innerHTML = '<span class="text-muted">⏳ विकिपीडिया से खाता जाँचा जा रहा है...</span>';
+                }
+                gateLoginBtn.disabled = true;
+                gateLoginBtn.textContent = '⏳ जाँच हो रही है...';
+
+                const res = await checkUserEligibility(uInput);
+                gateLoginBtn.disabled = false;
+                gateLoginBtn.textContent = '✓ खाता जोड़ें व टूल अनलॉक करें';
+
+                if (!res || !res.exists) {
+                    if (resBox) resBox.innerHTML = `<div class="security-box danger">❌ सदस्य "${escapeHtml(uInput)}" विकिपीडिया पर नहीं मिला। कृपया सही सदस्य नाम दर्ज करें।</div>`;
+                    return;
+                }
+
+                if (!res.isAutoconfirmed) {
+                    if (resBox) resBox.innerHTML = `<div class="security-box danger">⚠️ सदस्य "${escapeHtml(res.username)}" अभी स्वतःस्थापित (Autoconfirmed) नहीं है। न्यूनतम 4 दिन पुराना खाता और 10 संपादन आवश्यक हैं।</div>`;
+                    return;
+                }
+
+                state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
+                localStorage.setItem('da_wiki_user', res.username);
+                localStorage.setItem('da_username', res.username);
+                updateAccessControlUI(state.auth);
+                logMessage(`विकिपीडिया खाता <b>${escapeHtml(res.username)}</b> सफलतापूर्वक जुड़ा। उपकरण अनलॉक हो गया है!`, 'success');
+
+                const initialTarget = (new URLSearchParams(window.location.search)).get('page') || 'विकिपीडिया:चौपाल';
+                const pageInp = document.getElementById('page-input');
+                if (pageInp) pageInp.value = initialTarget;
+                loadPage(initialTarget);
+            });
+        }
+
+        const gateInput = document.getElementById('gate-username-input');
+        if (gateInput) {
+            gateInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    if (gateLoginBtn) gateLoginBtn.click();
+                }
+            });
+        }
+
         const checkEligBtn = document.getElementById('btn-check-user-eligibility');
         if (checkEligBtn) {
             checkEligBtn.addEventListener('click', async () => {
                 const uInput = document.getElementById('verify-username-input').value.trim();
                 if (!uInput) {
-                    alert('कृपया विकिमीडिया सदस्य नाम दर्ज करें।');
+                    alert('कृपया विकिपीडिया सदस्य नाम दर्ज करें।');
                     return;
                 }
 
                 const resBox = document.getElementById('verification-result-box');
-                resBox.style.display = 'block';
-                resBox.innerHTML = '<div style="padding:10px; text-align:center;"><span class="text-muted">⏳ विकिमीडिया सेंट्रलऑथ (meta.wikimedia.org) एवं हिन्दी विकिपीडिया से जानकारी सत्यापित की जा रही है...</span></div>';
+                if (resBox) {
+                    resBox.style.display = 'block';
+                    resBox.innerHTML = '<div style="padding:10px; text-align:center;"><span class="text-muted">⏳ विकिपीडिया से जानकारी जाँची जा रही है...</span></div>';
+                }
 
                 const res = await checkUserEligibility(uInput);
                 if (!res || !res.exists) {
-                    resBox.innerHTML = `<div class="security-box danger">❌ <strong>त्रुटि:</strong> ${res ? escapeHtml(res.message || res.error) : 'यह सदस्य नाम विकिमीडिया पर नहीं मिला।'}</div>`;
+                    if (resBox) resBox.innerHTML = `<div class="security-box danger">❌ <strong>त्रुटि:</strong> ${res ? escapeHtml(res.message || res.error) : 'यह सदस्य नाम विकिपीडिया पर नहीं मिला।'}</div>`;
                     return;
                 }
 
                 renderVerificationCard(res, resBox);
-                logMessage(`विकिमीडिया सदस्य <b>${escapeHtml(res.username)}</b> सत्यापित।`, 'success');
+                logMessage(`विकिपीडिया सदस्य <b>${escapeHtml(res.username)}</b> सत्यापित।`, 'success');
             });
         }
 
@@ -3041,13 +3180,14 @@ mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/Di
         const logoutBtn = document.getElementById('btn-logout');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => {
+                localStorage.removeItem('da_wiki_user');
                 localStorage.removeItem('da_username');
                 state.auth.isAutoconfirmed = false;
                 state.auth.isLoggedIn = false;
                 state.auth.username = '';
                 state.auth.verified = false;
-                updateAuthBadgeUI(null);
-                logMessage('सत्र समाप्त (लॉगआउट)।', 'info');
+                updateAccessControlUI(state.auth);
+                logMessage('सत्र समाप्त (लॉगआउट)। उपकरण लॉक हो गया है।', 'info');
             });
         }
 
@@ -3473,33 +3613,33 @@ mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/Di
             });
         }
 
-        // 16. प्रारंभिक URL पैरामीटर्स एवं सदस्य सत्यापन (?page=...&user=...)
+        // 16. प्रारंभिक URL पैरामीटर्स एवं स्वतः लॉगिन (?page=...&user=...)
         const urlParams = new URLSearchParams(window.location.search);
         const queryPage = urlParams.get('page');
         const queryUser = urlParams.get('user');
-
-        if (queryUser) {
-            checkUserEligibility(queryUser).then(res => {
-                if (res && res.exists) {
-                    state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
-                    localStorage.setItem('da_username', res.username);
-                    updateAuthBadgeUI(state.auth);
-                    logMessage(`सेंट्रलऑथ स्वतः सत्यापन: <b>${escapeHtml(res.username)}</b> सक्रिय हुआ।`, 'success');
-                }
-            });
-        } else if (state.auth.username) {
-            checkUserEligibility(state.auth.username).then(res => {
-                if (res && res.exists) {
-                    state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
-                    updateAuthBadgeUI(state.auth);
-                }
-            });
-        }
-
+        const candidateUser = queryUser || state.auth.username;
         const initialTarget = queryPage || 'विकिपीडिया:चौपाल';
         const pageInp = document.getElementById('page-input');
         if (pageInp) pageInp.value = initialTarget;
-        loadPage(initialTarget);
+
+        if (candidateUser) {
+            checkUserEligibility(candidateUser).then(res => {
+                if (res && res.exists && res.isAutoconfirmed) {
+                    state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
+                    localStorage.setItem('da_wiki_user', res.username);
+                    localStorage.setItem('da_username', res.username);
+                    updateAccessControlUI(state.auth);
+                    logMessage(`विकिपीडिया खाता <b>${escapeHtml(res.username)}</b> सक्रिय। उपकरण अनलॉक हो गया है।`, 'success');
+                    loadPage(initialTarget);
+                } else {
+                    updateAccessControlUI(state.auth);
+                }
+            }).catch(() => {
+                updateAccessControlUI(state.auth);
+            });
+        } else {
+            updateAccessControlUI(state.auth);
+        }
     });
 
 })();
