@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="hi" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>हिन्दी विकिपीडिया चर्चा समापन एवं पुरालेखण टूल | Hindi Wikipedia Discussion Archiver</title>
+    <meta name="description" content="हिन्दी विकिपीडिया पर चर्चा समापन, पुरालेख स्थानांतरण और वार्ता पन्नों के रखरखाव हेतु खुला वेब उपकरण।">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-inner container">
+            <div class="logo-area">
+                <div class="logo-icon">📚</div>
+                <div>
+                    <h1 class="app-title">चर्चा समापन एवं पुरालेखण टूल</h1>
+                    <p class="app-subtitle">हिन्दी विकिपीडिया (hi.wikipedia.org) संपादन एवं चर्चा प्रबंधन पटल</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="theme-toggle-btn" class="btn btn-secondary btn-sm" title="डार्क/लाइट मोड बदलें">🌓 थीम</button>
+                <a href="https://hi.wikipedia.org/wiki/सदस्य:विक्रम_प्रताप" target="_blank" class="btn btn-outline btn-sm">विकिपीडिया सदस्य पृष्ठ ↗</a>
+                <a href="https://github.com/vikram-pratap/hindi-wiki-discussion-archiver" target="_blank" class="btn btn-outline btn-sm">GitHub रिपॉजिटरी ↗</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content container">
+        <!-- 1. शीर्ष नियंत्रण पटल: पृष्ठ चयन एवं लोडिंग -->
+        <section class="card control-card">
+            <div class="form-row">
+                <div class="form-group flex-2">
+                    <label for="page-input" class="form-label">चर्चा / वार्ता पृष्ठ का शीर्षक दर्ज करें:</label>
+                    <div class="input-with-button">
+                        <input type="text" id="page-input" class="form-control" placeholder="उदा: विकिपीडिया:चौपाल अथवा विकिपीडिया:प्रबन्धक सूचनापट" value="विकिपीडिया:चौपाल" />
+                        <button id="load-page-btn" class="btn btn-primary">
+                            <span class="btn-icon">⚡</span> पृष्ठ लोड करें
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group flex-1">
+                    <label for="quick-preset-select" class="form-label">प्रमुख चर्चा पटल (सत्यापित):</label>
+                    <select id="quick-preset-select" class="form-control">
+                        <option value="">-- प्रमुख पटल से चुनें --</option>
+                        <optgroup label="चौपाल एवं सामुदायिक पटल">
+                            <option value="विकिपीडिया:चौपाल">विकिपीडिया:चौपाल (मुख्य)</option>
+                            <option value="विकिपीडिया:चौपाल/समाचार">विकिपीडिया:चौपाल/समाचार</option>
+                            <option value="विकिपीडिया:दूतावास">विकिपीडिया:दूतावास</option>
+                        </optgroup>
+                        <optgroup label="प्रबंधकीय एवं सुरक्षा पटल">
+                            <option value="विकिपीडिया:प्रबन्धक सूचनापट">विकिपीडिया:प्रबन्धक सूचनापट</option>
+                            <option value="विकिपीडिया:सुरक्षा अनुरोध">विकिपीडिया:सुरक्षा अनुरोध</option>
+                        </optgroup>
+                        <optgroup label="अधिकार एवं अनुमति निवेदन">
+                            <option value="विकिपीडिया:प्रबन्धन अधिकार हेतु निवेदन">विकिपीडिया:प्रबन्धन अधिकार निवेदन</option>
+                            <option value="विकिपीडिया:प्रशासक अधिकार हेतु निवेदन">विकिपीडिया:प्रशासक अधिकार निवेदन</option>
+                            <option value="विकिपीडिया:रोलबैकर्स अधिकार हेतु निवेदन">विकिपीडिया:रोलबैकर्स अधिकार निवेदन</option>
+                            <option value="विकिपीडिया:स्वतः परीक्षित अधिकार हेतु निवेदन">विकिपीडिया:स्वतः परीक्षित अधिकार निवेदन</option>
+                            <option value="विकिपीडिया:बॉट/अनुमोदन हेतु अनुरोध">विकिपीडिया:बॉट/अनुमोदन अनुरोध</option>
+                        </optgroup>
+                        <optgroup label="हटाने एवं स्थानांतरण चर्चाएँ">
+                            <option value="विकिपीडिया:पृष्ठ हटाने हेतु चर्चा">विकिपीडिया:पृष्ठ हटाने हेतु चर्चा (AfD)</option>
+                            <option value="विकिपीडिया:पृष्ठ हटाने हेतु चर्चा/फ़ाइलें">विकिपीडिया:पृष्ठ हटाने हेतु चर्चा/फ़ाइलें</option>
+                            <option value="विकिपीडिया:स्थानांतरण">विकिपीडिया:स्थानांतरण</option>
+                            <option value="विकिपीडिया:अनुरोधित लेख">विकिपीडिया:अनुरोधित लेख</option>
+                        </optgroup>
+                    </select>
+                </div>
+            </div>
+
+            <!-- पृष्ठ स्थिति पट्टी -->
+            <div id="page-status-bar" class="page-status-bar" style="display: none;">
+                <div class="status-indicators">
+                    <span id="loaded-page-link" class="status-item font-bold"></span>
+                    <span id="stat-total" class="badge badge-info">कुल: 0</span>
+                    <span id="stat-open" class="badge badge-success">सक्रिय: 0</span>
+                    <span id="stat-closed" class="badge badge-warning">समाप्त: 0</span>
+                    <span id="stat-empty" class="badge badge-danger">रिक्त: 0</span>
+                    <span id="stat-box" class="badge badge-neutral">पुरालेख पेटी: अनुपस्थित</span>
+                </div>
+                <div class="status-links">
+                    <a id="wiki-view-link" href="#" target="_blank" class="link-btn">विकिपीडिया पर पृष्ठ देखें ↗</a>
+                    <a id="wiki-history-link" href="#" target="_blank" class="link-btn">इतिहास ↗</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. मध्य पटल: अनुभाग सूची, त्वरित फ़िल्टर एवं बहु-चयन -->
+        <section id="sections-section" class="card" style="display: none;">
+            <div class="section-header-row">
+                <div class="section-title-wrap">
+                    <h2 class="section-title">चर्चा अनुभाग सूची</h2>
+                    <span class="selection-pill">चयनित: <strong id="selected-counter">0</strong></span>
+                </div>
+
+                <div class="filter-toolbar">
+                    <input type="text" id="filter-search" class="form-control form-control-sm" placeholder="अनुभाग शीर्षक खोजें..." />
+                    <button id="btn-select-all" class="btn btn-secondary btn-xs">सभी</button>
+                    <button id="btn-select-closed" class="btn btn-secondary btn-xs">समाप्त</button>
+                    <button id="btn-select-open" class="btn btn-secondary btn-xs">सक्रिय</button>
+                    <button id="btn-select-empty" class="btn btn-secondary btn-xs">रिक्त</button>
+                    <button id="btn-select-invert" class="btn btn-secondary btn-xs">उल्टा चयन</button>
+                    <select id="filter-inactive-days" class="form-control form-control-sm highlight-select">
+                        <option value="">निष्क्रियता फ़िल्टर...</option>
+                        <option value="7">7+ दिन पुराने</option>
+                        <option value="15">15+ दिन पुराने</option>
+                        <option value="30">30+ दिन (1 माह)</option>
+                        <option value="60">60+ दिन (2 माह)</option>
+                        <option value="90">90+ दिन (3 माह)</option>
+                        <option value="180">180+ दिन (6 माह)</option>
+                    </select>
+                    <button id="btn-select-none" class="btn btn-outline btn-xs">चयन हटाएँ</button>
+                </div>
+            </div>
+
+            <!-- अनुभागों की तालिका -->
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th class="col-check"><input type="checkbox" id="master-checkbox" title="सभी चुनें" /></th>
+                            <th class="col-num">क्र.</th>
+                            <th class="col-title">अनुभाग शीर्षक एवं आकार</th>
+                            <th class="col-meta text-center">टिप्पणियाँ / सदस्य</th>
+                            <th class="col-date text-center">अंतिम गतिविधि</th>
+                            <th class="col-status text-center">स्थिति</th>
+                            <th class="col-actions text-center">त्वरित साधन</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sections-tbody">
+                        <!-- डायनेमिक पंक्तियाँ यहाँ आएँगी -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 3. कार्यवाही पटल (3 मुख्य टैब: समापन, पुरालेखण, सहायक उपकरण) -->
+        <section id="actions-section" class="card" style="display: none;">
+            <div class="tabs-nav">
+                <button class="tab-btn active" data-tab="tab-close">
+                    <span class="tab-badge">1</span> चर्चा समापन (बंद करें)
+                </button>
+                <button class="tab-btn" data-tab="tab-archive">
+                    <span class="tab-badge">2</span> पुरालेख स्थानांतरण (Archive)
+                </button>
+                <button class="tab-btn" data-tab="tab-minitools">
+                    <span class="tab-badge">3</span> सहायक उपकरण (Mini-Tools)
+                </button>
+                <button class="tab-btn" data-tab="tab-settings">
+                    <span class="tab-badge">⚙️</span> सेटिंग्स व संपादन मोड
+                </button>
+            </div>
+
+            <!-- टैब 1: चर्चा समापन -->
+            <div id="tab-close" class="tab-content active">
+                <div class="tab-intro">
+                    चयनित सक्रिय चर्चाओं को मानक हिन्दी विकिपीडिया साँचों के साथ समाप्त घोषित करें।
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="close-format" class="form-label">समापन साँचा / बॉक्स प्रारूप:</label>
+                        <select id="close-format" class="form-control">
+                            <option value="charcha_tpl_param" selected>साँचा (मानक): {{चर्चा शीर्ष|1=परिणाम...}} एवं {{चर्चा तल}}</option>
+                            <option value="charcha_tpl">साँचा: {{चर्चा शीर्ष}} एवं {{चर्चा तल}}</option>
+                            <option value="archive_top_bottom">अंतर्राष्ट्रीय: {{Archive top|result=...}} एवं {{Archive bottom}}</option>
+                            <option value="cot_cob">संकुचनीय बॉक्स: {{cot|शीर्षक=...}} एवं {{cob}}</option>
+                            <option value="hat_hab">शीर्षक बॉक्स: {{Hat|1=...}} एवं {{Hab}}</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="close-status" class="form-label">परिणाम स्थिति (Status):</label>
+                        <select id="close-status" class="form-control">
+                            <option value="परिणाम" selected>परिणाम (सामान्य)</option>
+                            <option value="निष्कर्ष">निष्कर्ष</option>
+                            <option value="स्वीकृत">स्वीकृत (Accepted)</option>
+                            <option value="अस्वीकृत">अस्वीकृत (Declined)</option>
+                            <option value="सहमति बनी">सहमति बनी (Consensus)</option>
+                            <option value="सहमति नहीं">सहमति नहीं (No Consensus)</option>
+                            <option value="हटाया गया">हटाया गया (Deleted - AfD)</option>
+                            <option value="रखा गया">रखा गया (Kept - AfD)</option>
+                            <option value="स्थानांतरित">स्थानांतरित (Moved)</option>
+                            <option value="विलय किया गया">विलय किया गया (Merged)</option>
+                            <option value="निस्तारित">निस्तारित (Resolved)</option>
+                            <option value="वापस लिया गया">वापस लिया गया (Withdrawn)</option>
+                            <option value="स्थगित">स्थगित (Postponed)</option>
+                            <option value="स्वतः समाप्त">स्वतः समाप्त (निष्क्रिय)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="close-badge" class="form-label">सत्यापित स्थिति चिह्न (Badge):</label>
+                        <select id="close-badge" class="form-control">
+                            <option value="पूर्ण" selected>{{पूर्ण}} (Done - हरा टिक)</option>
+                            <option value="Done">{{Done}}</option>
+                            <option value="स्वीकृत">{{स्वीकृत}}</option>
+                            <option value="अस्वीकार">{{अस्वीकार}}</option>
+                            <option value="Not done">{{Not done}} (लाल क्रॉस)</option>
+                            <option value="Resolved">{{Resolved}} (हल हुआ)</option>
+                            <option value="Withdrawn">{{Withdrawn}} (वापस लिया)</option>
+                            <option value="लंबित">{{लंबित}}</option>
+                            <option value="विलय">{{विलय}}</option>
+                            <option value="टिप्पणी">{{टिप्पणी}}</option>
+                            <option value="">-- कोई चिह्न नहीं --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="label-with-addon">
+                        <label for="close-verdict" class="form-label">निष्कर्ष टिप्पणी (हस्ताक्षर --~~~~ स्वतः जुड़ेंगे):</label>
+                        <select id="verdict-presets" class="form-control form-control-xs auto-width">
+                            <option value="">+ मानक निष्कर्ष वाक्य जोड़ें...</option>
+                            <option value="समुदाय की आम सहमति के अनुसार प्रस्ताव स्वीकृत किया गया।">आम सहमति से स्वीकृत</option>
+                            <option value="चर्चा में आवश्यक सहमति न बनने के कारण प्रस्ताव अस्वीकृत किया गया।">सहमति न बनने से अस्वीकृत</option>
+                            <option value="लंबे समय से निष्क्रिय रहने एवं कोई नई टिप्पणी न होने के कारण चर्चा समाप्त की जाती है।">निष्क्रिय चर्चा समाप्त</option>
+                            <option value="अनुरोधकर्ता द्वारा स्वयं अपना अनुरोध वापस ले लिया गया।">अनुरोध वापस लिया गया</option>
+                            <option value="उल्लेखनीयता एवं सत्यापन नीतियों के अनुरूप न होने के कारण पृष्ठ हटाया गया।">हटाया गया (AfD)</option>
+                            <option value="विश्वसनीय स्रोतों व सन्दर्भों की पुष्टि के आधार पर पृष्ठ को बनाए रखने (रखा गया) का निर्णय हुआ।">रखा गया (AfD)</option>
+                            <option value="सामग्री को संबंधित मुख्य लेख में विलय करने पर सहमति बनी।">सामग्री विलय स्वीकृत</option>
+                            <option value="प्रस्ताव के अनुसार पृष्ठ को नए शीर्षक पर स्थानांतरित किया गया।">स्थानांतरण स्वीकृत</option>
+                            <option value="अपेक्षित प्रशासनिक एवं तकनीकी कार्य पूर्ण कर दिया गया है।">कार्य निस्तारित</option>
+                        </select>
+                    </div>
+                    <input type="text" id="close-verdict" class="form-control" placeholder="यहाँ चर्चा का अंतिम निर्णय या निष्कर्ष लिखें..." />
+                </div>
+
+                <div class="action-buttons-row">
+                    <button id="btn-preview-close" class="btn btn-secondary">
+                        <span class="btn-icon">👁️</span> समापन पूर्वावलोकन देखें
+                    </button>
+                    <button id="btn-exec-close" class="btn btn-success">
+                        <span class="btn-icon">✅</span> चयनित चर्चा समाप्त करें
+                    </button>
+                </div>
+            </div>
+
+            <!-- टैब 2: पुरालेख स्थानांतरण -->
+            <div id="tab-archive" class="tab-content">
+                <div class="tab-intro">
+                    चयनित चर्चाओं को वर्तमान पृष्ठ से हटाकर उपयुक्त पुरालेख उप-पृष्ठ (उदा. <code>/पुरालेख 1</code>) में सुरक्षित स्थानांतरित करें।
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group flex-2">
+                        <label for="archive-target-input" class="form-label">लक्षित पुरालेख पृष्ठ का नाम:</label>
+                        <div class="input-with-button">
+                            <input type="text" id="archive-target-input" class="form-control" placeholder="उदा: विकिपीडिया:चौपाल/पुरालेख 1" />
+                            <button id="btn-check-archives" class="btn btn-secondary" title="मौजूदा पुरालेख और उनका आकार जाँचें">
+                                🔍 पुरालेख जाँचें
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group flex-1">
+                        <label for="archive-header-tpl" class="form-label">नए पुरालेख हेतु शीर्षक साँचा:</label>
+                        <select id="archive-header-tpl" class="form-control">
+                            <option value="{{पुरालेख पेटी}}" selected>{{पुरालेख पेटी}}</option>
+                            <option value="{{पुरालेख पेटी|auto=yes}}">{{पुरालेख पेटी|auto=yes}}</option>
+                            <option value="{{पुरालेख पेटी|auto=yes|search=yes}}">{{पुरालेख पेटी|auto=yes|search=yes}}</option>
+                            <option value="{{Archives}}">{{Archives}}</option>
+                            <option value="{{Archive box}}">{{Archive box}}</option>
+                            <option value="">कोई शीर्षक साँचा न जोड़ें</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- मौजूदा पुरालेख उप-पृष्ठों की सूची एवं आकार विवरण -->
+                <div id="existing-archives-box" class="info-callout" style="display: none;">
+                    <div class="callout-title">मौजूदा पुरालेख पृष्ठ एवं आकार:</div>
+                    <div id="archives-list-chips" class="chips-container"></div>
+                </div>
+
+                <!-- पुरालेख विकल्प -->
+                <div class="options-box">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="chk-auto-split" checked />
+                        <span>यदि पुरालेख पृष्ठ आकार सीमा पार करे तो स्वतः अगला क्रमांक चुनें: </span>
+                        <select id="select-max-size" class="form-control form-control-xs auto-width">
+                            <option value="50">50 KB</option>
+                            <option value="75">75 KB</option>
+                            <option value="100" selected>100 KB (मानक)</option>
+                            <option value="150">150 KB</option>
+                        </select>
+                    </label>
+
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="chk-leave-stub" />
+                        <span>मूल पृष्ठ पर पुरालेख सूचना स्टब छोड़ें (Leave Archive Stub Link)</span>
+                    </label>
+
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="chk-auto-add-box" checked />
+                        <span>यदि मूल पृष्ठ पर पुरालेख पेटी नहीं है तो स्वतः शीर्ष पर जोड़ें</span>
+                    </label>
+                </div>
+
+                <div class="action-buttons-row">
+                    <button id="btn-preview-archive" class="btn btn-secondary">
+                        <span class="btn-icon">👁️</span> पुरालेख पूर्वावलोकन देखें
+                    </button>
+                    <button id="btn-exec-archive" class="btn btn-primary">
+                        <span class="btn-icon">📦</span> चयनित अनुभाग पुरालेख में भेजें
+                    </button>
+                    <button id="btn-exec-close-archive" class="btn btn-accent" title="चयनित चर्चा को बंद करके तुरंत पुरालेख में स्थानांतरित करें">
+                        <span class="btn-icon">⚡</span> चर्चा बंद करें + पुरालेख में भेजें
+                    </button>
+                </div>
+            </div>
+
+            <!-- टैब 3: सहायक उपकरण (Mini-Tools) -->
+            <div id="tab-minitools" class="tab-content">
+                <div class="tools-grid">
+                    <!-- टूल 1: बंद चर्चा पुनः खोलें -->
+                    <div class="tool-card">
+                        <div class="tool-icon">🔓</div>
+                        <h3 class="tool-title">बंद चर्चा पुनः खोलें (Reopen)</h3>
+                        <p class="tool-desc">चयनित समाप्त अनुभागों से समापन साँचा हटाकर चर्चा को पुनः सक्रिय करें।</p>
+                        <label class="checkbox-label tool-option">
+                            <input type="checkbox" id="chk-reopen-clean-verdict" checked /> पूर्व निर्णय पंक्ति भी हटाएँ
+                        </label>
+                        <button id="btn-tool-reopen" class="btn btn-secondary btn-block">चर्चा पुनः खोलें</button>
+                    </div>
+
+                    <!-- टूल 2: शीर्ष पर पुरालेख पेटी जोड़ें -->
+                    <div class="tool-card">
+                        <div class="tool-icon">🗂️</div>
+                        <h3 class="tool-title">शीर्ष पर पुरालेख पेटी जोड़ें</h3>
+                        <p class="tool-desc">मूल पृष्ठ के शीर्ष पर <code>{{पुरालेख पेटी|auto=yes|search=yes}}</code> साँचा स्थापित करें।</p>
+                        <button id="btn-tool-addbox" class="btn btn-secondary btn-block">पुरालेख पेटी जोड़ें</button>
+                    </div>
+
+                    <!-- टूल 3: पुरालेख अनुक्रमणिका जनरेटर -->
+                    <div class="tool-card">
+                        <div class="tool-icon">📋</div>
+                        <h3 class="tool-title">पुरालेख अनुक्रमणिका (Index)</h3>
+                        <p class="tool-desc">चयनित अनुभागों की विकिटेक्स्ट सारणी या बुलेट सूची तैयार करें।</p>
+                        <div class="radio-group tool-option">
+                            <label><input type="radio" name="index-fmt" value="table" checked /> सारणी</label>
+                            <label><input type="radio" name="index-fmt" value="list" /> बुलेट सूची</label>
+                        </div>
+                        <button id="btn-tool-makeindex" class="btn btn-secondary btn-block">अनुक्रमणिका तैयार करें</button>
+                    </div>
+
+                    <!-- टूल 4: रिक्त अनुभाग विलोपन -->
+                    <div class="tool-card">
+                        <div class="tool-icon">🧹</div>
+                        <h3 class="tool-title">रिक्त अनुभाग सफ़ाई</h3>
+                        <p class="tool-desc">जिन अनुभागों में केवल शीर्षक है और कोई टिप्पणी नहीं है, उन्हें पृष्ठ से हटाएँ।</p>
+                        <button id="btn-tool-cleanempty" class="btn btn-danger btn-block">सभी रिक्त अनुभाग हटाएँ</button>
+                    </div>
+
+                    <!-- टूल 5: चर्चा अन्य पृष्ठ पर भेजें -->
+                    <div class="tool-card tool-span-2">
+                        <div class="tool-icon">🔀</div>
+                        <h3 class="tool-title">चर्चा अन्य वार्ता / परियोजना पृष्ठ पर स्थानांतरित करें (Move Thread)</h3>
+                        <p class="tool-desc">गलत स्थान पर शुरू की गई चर्चा को किसी अन्य वार्ता या परियोजना पृष्ठ पर भेजें।</p>
+                        <div class="input-with-button tool-option">
+                            <input type="text" id="relocate-target-input" class="form-control" placeholder="गंतव्य पृष्ठ: जैसे विकिपीडिया:प्रबन्धक सूचनापट" />
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="chk-relocate-stub" checked /> मूल पृष्ठ पर पुनर्निर्देशन सूचना छोड़ें
+                            </label>
+                        </div>
+                        <button id="btn-tool-relocate" class="btn btn-secondary btn-block">चयनित चर्चा नए पृष्ठ पर स्थानांतरित करें</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- टैब 4: सेटिंग्स व संपादन मोड -->
+            <div id="tab-settings" class="tab-content">
+                <div class="tab-intro">
+                    विकिपीडिया पर संपादन सहेजने की विधि और प्राथमिकताएँ निर्धारित करें।
+                </div>
+
+                <div class="settings-grid">
+                    <div class="setting-box">
+                        <h3 class="setting-title">संपादन सहेजने की प्राथमिक विधि</h3>
+                        <label class="radio-label">
+                            <input type="radio" name="edit-method" value="browser" checked />
+                            <div>
+                                <strong>ब्राउज़र में सीधा संपादन (One-Click Wikipedia Edit - सुरक्षित एवं अनुशंसित)</strong>
+                                <p class="setting-desc">आपको किसी पासवर्ड की आवश्यकता नहीं है। टूल विकिपीडिया का संपादन पृष्ठ तैयार विकिटेक्स्ट के साथ नए टैब में खोल देगा, जहाँ आप अपने मुख्य विकिपीडिया खाते से 1-क्लिक में सुरक्षित कर सकते हैं।</p>
+                            </div>
+                        </label>
+
+                        <label class="radio-label">
+                            <input type="radio" name="edit-method" value="clipboard" />
+                            <div>
+                                <strong>क्लिपबोर्ड कॉपी मोड (Clipboard Mode)</strong>
+                                <p class="setting-desc">टूल नया विकिटेक्स्ट क्लिपबोर्ड पर कॉपी करेगा और विकिपीडिया पृष्ठ खोलेगा, जहाँ आप सीधे पेस्ट कर सकते हैं।</p>
+                            </div>
+                        </label>
+
+                        <label class="radio-label">
+                            <input type="radio" name="edit-method" value="api" />
+                            <div>
+                                <strong>MediaWiki API द्वारा स्वचालित संपादन (Bot / Direct API)</strong>
+                                <p class="setting-desc">यदि आप बॉट क्रेडेंशियल्स दर्ज करते हैं, तो टूल बिना विकिपीडिया खोले पृष्ठभूमि में संपादन सीधे सुरक्षित कर देगा।</p>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div id="api-credentials-box" class="setting-box" style="display: none;">
+                        <h3 class="setting-title">MediaWiki API क्रेडेंशियल्स</h3>
+                        <div class="form-group">
+                            <label for="cfg-username" class="form-label">बॉट सदस्य नाम (User@BotName):</label>
+                            <input type="text" id="cfg-username" class="form-control" placeholder="उदा: विक्रम प्रताप@DiscussionArchiver" />
+                        </div>
+                        <div class="form-group">
+                            <label for="cfg-password" class="form-label">बॉट पासवर्ड (Special:BotPasswords से):</label>
+                            <input type="password" id="cfg-password" class="form-control" placeholder="••••••••••••••••" />
+                        </div>
+                        <button id="btn-save-credentials" class="btn btn-secondary btn-sm">क्रेडेंशियल्स सहेजें</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. पूर्वावलोकन / आउटपुट मोडल / बॉक्स -->
+        <div id="preview-modal" class="modal-overlay" style="display: none;">
+            <div class="modal-dialog">
+                <div class="modal-header">
+                    <h3 id="modal-title" class="modal-title">विकिटेक्स्ट पूर्वावलोकन</h3>
+                    <button id="btn-close-modal" class="modal-close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="modal-summary-badge" class="modal-summary-badge"></div>
+                    <div id="modal-tabs" class="preview-tabs" style="display: none;">
+                        <button class="preview-tab-btn active" data-ptab="p-source">मूल पृष्ठ विकिटेक्स्ट</button>
+                        <button class="preview-tab-btn" data-ptab="p-archive">पुरालेख पृष्ठ विकिटेक्स्ट</button>
+                    </div>
+                    <div id="p-source" class="preview-tab-pane active">
+                        <textarea id="preview-textarea-source" class="code-editor" readonly></textarea>
+                    </div>
+                    <div id="p-archive" class="preview-tab-pane" style="display: none;">
+                        <textarea id="preview-textarea-archive" class="code-editor" readonly></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="footer-left">
+                        <span id="diff-meta-info" class="text-muted text-sm"></span>
+                    </div>
+                    <div class="footer-right">
+                        <button id="btn-copy-preview" class="btn btn-secondary">
+                            📋 क्लिपबोर्ड पर कॉपी करें
+                        </button>
+                        <a id="btn-open-wiki-edit" href="#" target="_blank" class="btn btn-primary">
+                            विकिपीडिया पर संपादन खोलें ↗
+                        </a>
+                        <button id="btn-confirm-api-edit" class="btn btn-success" style="display: none;">
+                            🚀 सीधे विकिपीडिया पर सुरक्षित करें
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. गतिविधि लॉग कंसोल -->
+        <section class="card log-card">
+            <div class="log-header">
+                <span class="log-title">कार्यवाही लॉग (Activity Console)</span>
+                <button id="btn-clear-log" class="btn btn-outline btn-xs">लॉग साफ़ करें</button>
+            </div>
+            <div id="activity-log" class="log-body">
+                <div class="log-entry text-muted">टूल तैयार है। ऊपर दिए गए पटल से पृष्ठ चुनें अथवा लोड करें...</div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="app-footer container">
+        <p>
+            हिन्दी विकिपीडिया चर्चा प्रबंधन एवं पुरालेखण उपकरण | लेखक: 
+            <a href="https://hi.wikipedia.org/wiki/सदस्य:विक्रम_प्रताप" target="_blank">सदस्य:विक्रम प्रताप</a> | 
+            लाइसेंस: <a href="LICENSE">MIT</a> / CC BY-SA 4.0
+        </p>
+    </footer>
+
+    <!-- एप्लिकेशन स्क्रिप्ट -->
+    <script src="app.js"></script>
+</body>
+</html>
