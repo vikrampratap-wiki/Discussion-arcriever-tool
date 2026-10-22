@@ -333,19 +333,50 @@
         return await resp.json();
     }
 
-    // सदस्य न्यूनतम पात्रता सत्यापन (Autoconfirmed / Bot / Sysop)
+    // विकिमीडिया सेंट्रलऑथ (CentralAuth SUL) वैश्विक खाता विवरण
+    async function fetchCentralAuthInfo(username) {
+        if (!username) return null;
+        const cleanName = username.trim().replace(/^सदस्य:/i, '').replace(/^User:/i, '');
+        const metaUrl = `https://meta.wikimedia.org/w/api.php?action=query&meta=globaluserinfo&guiuser=${encodeURIComponent(cleanName)}&guiprop=groups|rights|merged|editcount&format=json&origin=*`;
+
+        try {
+            const resp = await fetch(metaUrl);
+            if (!resp.ok) return null;
+            const data = await resp.json();
+            const gui = data.query && data.query.globaluserinfo ? data.query.globaluserinfo : null;
+            if (!gui || gui.missing !== undefined) return null;
+            return {
+                id: gui.id,
+                name: gui.name,
+                home: gui.home,
+                registration: gui.registration,
+                globalEditCount: gui.editcount || 0,
+                groups: gui.groups || [],
+                mergedCount: gui.merged ? gui.merged.length : 0,
+                isUnified: true
+            };
+        } catch (e) {
+            console.warn('CentralAuth fetch error:', e);
+            return null;
+        }
+    }
+
+    // सदस्य न्यूनतम पात्रता एवं सेंट्रलऑथ सत्यापन
     async function checkUserEligibility(username) {
         if (!username) return null;
         const cleanName = username.trim().replace(/^सदस्य:/i, '').replace(/^User:/i, '');
 
         try {
-            const data = await fetchWikipediaAPI({
+            const localDataPromise = fetchWikipediaAPI({
                 action: 'query',
                 list: 'users',
                 ususers: cleanName,
                 usprop: 'groups|rights|editcount|registration',
                 formatversion: 2
             });
+            const centralPromise = fetchCentralAuthInfo(cleanName);
+
+            const [data, central] = await Promise.all([localDataPromise, centralPromise]);
 
             const user = data.query && data.query.users ? data.query.users[0] : null;
             if (!user || user.missing !== undefined) {
@@ -358,10 +389,6 @@
             const regDate = user.registration ? new Date(user.registration) : new Date(0);
             const daysOld = user.registration ? Math.max(0, Math.floor((Date.now() - regDate.getTime()) / (1000 * 60 * 60 * 24))) : 999;
 
-            // विकिपीडिया न्यूनतम पात्रता नियम:
-            // 1. autoconfirmed अधिकार या समूह उपस्थित होना
-            // 2. अथवा sysop / bot / rollbacker / patroller
-            // 3. अथवा खाता >= 4 दिन पुराना एवं संपादन >= 10
             const hasGroup = groups.includes('autoconfirmed') || groups.includes('sysop') || groups.includes('bot') || groups.includes('rollbacker') || groups.includes('patroller');
             const hasRight = rights.includes('autoconfirmed');
             const meetsThreshold = (daysOld >= 4 && editCount >= 10);
@@ -380,7 +407,8 @@
                 daysOld: daysOld,
                 isAutoconfirmed: isAutoconfirmed,
                 isBot: isBot,
-                isSysop: isSysop
+                isSysop: isSysop,
+                central: central
             };
         } catch (err) {
             console.error('User verification error:', err);
@@ -391,17 +419,10 @@
     function updateAuthBadgeUI(info) {
         const pill = document.getElementById('logged-user-pill');
         const loginBtn = document.getElementById('btn-open-login');
-        const banner = document.getElementById('eligibility-banner');
 
         if (!info || !info.isAutoconfirmed) {
             pill.style.display = 'none';
             loginBtn.style.display = 'inline-flex';
-            if (banner) {
-                banner.className = 'security-box danger';
-                banner.innerHTML = `<div><strong>⚠️ न्यूनतम पात्रता अपूर्ण:</strong> उपकरण से स्वचालित संपादन व समापन हेतु सदस्य को न्यूनतम <strong>स्वतः स्थापित सदस्य (Autoconfirmed - 4 दिन पुराना व 10+ संपादन)</strong> होना अनिवार्य है।</div>
-                <button id="btn-verify-banner-btn" class="btn btn-outline btn-xs" style="margin-left:12px; white-space:nowrap;">पात्रता सत्यापित करें ↗</button>`;
-                document.getElementById('btn-verify-banner-btn').onclick = () => openLoginModal('ltab-verify');
-            }
             return;
         }
 
@@ -418,14 +439,12 @@
         } else if (info.isSysop) {
             badgeEl.className = 'badge-sysop';
             badgeEl.textContent = '🛡️ प्रबंधक';
+        } else if (info.central && info.central.isUnified) {
+            badgeEl.className = 'badge-sul';
+            badgeEl.textContent = '🌐 सेंट्रल SUL';
         } else {
             badgeEl.className = 'badge-autoconfirmed';
             badgeEl.textContent = '✓ स्वतःस्थापित';
-        }
-
-        if (banner) {
-            banner.className = 'security-box success';
-            banner.innerHTML = `<div><strong>✓ पात्रता सत्यापित:</strong> सदस्य <strong>${escapeHtml(info.username)}</strong> स्वतः स्थापित सदस्य के रूप में अधिकृत हैं (${info.editCount.toLocaleString('hi-IN')} संपादन, ${info.daysOld} दिन पुराना खाता)।</div>`;
         }
     }
 
@@ -1081,22 +1100,64 @@
             }
 
             const autoconfirmedTag = res.isAutoconfirmed
-                ? '<span class="badge-autoconfirmed">✅ स्वतः स्थापित सदस्य (पात्र)</span>'
-                : '<span class="badge-restricted">❌ स्वतः स्थापित नहीं (अपात्र)</span>';
+                ? '<span class="badge-autoconfirmed">✅ स्वतः स्थापित (पात्र)</span>'
+                : '<span class="badge-restricted">❌ अपात्र</span>';
+
+            const globalEdits = res.central ? res.central.globalEditCount.toLocaleString('hi-IN') : '—';
+            const homeWiki = res.central && res.central.home ? res.central.home : 'hiwiki';
+            const sulLink = `https://meta.wikimedia.org/wiki/Special:CentralAuth/${encodeURIComponent(res.username)}`;
 
             resBox.innerHTML = `
-                <div style="font-size:13.5px; line-height: 1.7;">
-                    <div><strong>सदस्य नाम:</strong> ${escapeHtml(res.username)}</div>
-                    <div><strong>खाता आयु:</strong> ${res.daysOld} दिन (${res.registration ? res.registration.split('T')[0] : 'उपलब्ध नहीं'})</div>
-                    <div><strong>कुल संपादन:</strong> ${res.editCount.toLocaleString('hi-IN')}</div>
-                    <div><strong>सदस्य समूह:</strong> <code>${res.groups.join(', ') || 'user'}</code></div>
-                    <div style="margin-top:8px;"><strong>पात्रता स्थिति:</strong> ${autoconfirmedTag}</div>
+                <div class="central-auth-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="user-avatar" style="width:28px; height:28px; font-size:13px;">${res.username[0] || 'व'}</span>
+                            <div>
+                                <strong>${escapeHtml(res.username)}</strong>
+                                ${res.central ? '<span class="badge-sul" style="margin-left:4px;">🌐 SUL Unified</span>' : ''}
+                            </div>
+                        </div>
+                        ${autoconfirmedTag}
+                    </div>
+                    <div class="metric-grid">
+                        <div class="metric-box">
+                            <div class="metric-val">${res.editCount.toLocaleString('hi-IN')}</div>
+                            <div class="metric-lbl">🇮🇳 हिन्दी संपादन</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-val">${globalEdits}</div>
+                            <div class="metric-lbl">🌍 वैश्विक संपादन (SUL)</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-val">${homeWiki}</div>
+                            <div class="metric-lbl">🏠 मूल विकि</div>
+                        </div>
+                    </div>
+                    <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center; font-size:12px; flex-wrap:wrap; gap:8px;">
+                        <span class="text-muted">खाता आयु: <strong>${res.daysOld} दिन</strong> (${res.registration ? res.registration.split('T')[0] : '—'})</span>
+                        <a href="${sulLink}" target="_blank" class="link-btn">सेंट्रलऑथ प्रोफ़ाइल (Meta) ↗</a>
+                    </div>
+                    ${res.isAutoconfirmed ? `
+                    <div style="margin-top:10px; padding-top:8px; border-top:1px dashed var(--border-color); text-align:right;">
+                        <button type="button" id="btn-use-this-user" class="btn btn-primary btn-sm">
+                            ✓ इस खाते से उपकरण प्रारंभ करें
+                        </button>
+                    </div>` : ''}
                 </div>
             `;
 
             if (res.isAutoconfirmed) {
                 state.auth = Object.assign(state.auth, res);
                 updateAuthBadgeUI(state.auth);
+                localStorage.setItem('da_username', res.username);
+
+                const useBtn = document.getElementById('btn-use-this-user');
+                if (useBtn) {
+                    useBtn.addEventListener('click', () => {
+                        document.getElementById('login-modal').style.display = 'none';
+                        logMessage(`सेंट्रलऑथ लॉगिन: <b>${res.username}</b> सक्रिय हुआ।`, 'success');
+                    });
+                }
             }
         });
 

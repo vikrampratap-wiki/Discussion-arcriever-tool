@@ -22,39 +22,27 @@
             </div>
             <div class="header-actions">
                 <div id="auth-status-container" class="user-badge-container">
-                    <button id="btn-open-login" class="btn btn-primary btn-sm" title="विकिमेडिया सदस्य लॉगिन एवं पात्रता सत्यापन">
-                        🔐 विकिमेडिया लॉगिन / पात्रता
+                    <button id="btn-open-login" class="btn btn-wikimedia btn-sm" title="विकिमीडिया सेंट्रल लॉगिन (CentralAuth SUL)">
+                        🌐 विकिमीडिया सेंट्रल लॉगिन
                     </button>
                     <div id="logged-user-pill" class="user-pill" style="display:none;">
                         <span class="user-avatar" id="user-avatar-initial">व</span>
                         <span id="logged-user-name">सदस्य</span>
-                        <span id="logged-user-badge" class="badge-autoconfirmed">स्वतःस्थापित</span>
-                        <button id="btn-switch-user" class="btn btn-outline btn-xs" title="सदस्य बदलें / स्विच करें" style="padding:2px 7px; font-size:11px;">👤 बदलें</button>
+                        <span id="logged-user-badge" class="badge-sul">🌐 सेंट्रल SUL</span>
+                        <button id="btn-switch-user" class="btn btn-outline btn-xs" title="सेंट्रल प्रोफ़ाइल व सदस्य बदलें" style="padding:2px 7px; font-size:11px;">👤 खाता</button>
                         <button id="btn-logout" class="btn btn-outline btn-xs" title="लॉगआउट" style="padding:2px 6px; font-size:11px;">✕</button>
                     </div>
                 </div>
                 <button id="btn-download-standalone" class="btn btn-download btn-sm" title="सभी कोड को एकल ऑफ़लाइन फ़ाइल में डाउनलोड करें">
-                    📥 एकल फ़ाइल डाउनलोड
+                    📥 एकल फ़ाइल
                 </button>
-                <button id="theme-toggle-btn" class="btn btn-secondary btn-sm" title="डार्क/लाइट मोड बदलें">🌓 थीम</button>
-                <a href="https://hi.wikipedia.org/wiki/सदस्य:विक्रम_प्रताप" target="_blank" class="btn btn-outline btn-sm">विकिपीडिया सदस्य पृष्ठ ↗</a>
-                <a href="https://github.com/vikrampratap-wiki/Discussion-arcriever-tool" target="_blank" class="btn btn-outline btn-sm">GitHub रिपॉजिटरी ↗</a>
+                <button id="theme-toggle-btn" class="btn btn-secondary btn-sm" title="डार्क/लाइट मोड बदलें">🌓</button>
+                <a href="https://github.com/vikrampratap-wiki/Discussion-arcriever-tool" target="_blank" class="btn btn-outline btn-sm" title="GitHub रिपॉजिटरी">GitHub ↗</a>
             </div>
         </div>
     </header>
 
     <main class="main-content container">
-        <!-- 0. न्यूनतम योग्यता एवं सुरक्षा सूचना बैनर -->
-        <div id="eligibility-banner" class="security-box" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <div>
-                <strong>🛡️ न्यूनतम विकिपीडिया पात्रता:</strong>
-                इस उपकरण से सीधे संपादन व चर्चा समापन हेतु सदस्य को न्यूनतम <strong>स्वतः स्थापित सदस्य (Autoconfirmed - खाता 4 दिन पुराना व 10+ संपादन)</strong> या <strong>बॉट (Bot)</strong> होना आवश्यक है।
-            </div>
-            <button id="btn-verify-eligibility-quick" class="btn btn-outline btn-xs" style="white-space: nowrap; margin-left: 12px;">
-                🔍 अपनी पात्रता जाँचें
-            </button>
-        </div>
-
         <!-- 1. शीर्ष नियंत्रण पटल: पृष्ठ चयन एवं लोडिंग -->
         <section class="card control-card">
             <div class="form-row">
@@ -558,96 +546,70 @@
             </div>
         </div>
 
-        <!-- 4.1 विकिमेडिया लॉगिन एवं पात्रता सत्यापन मोडल -->
+        <!-- 4.1 विकिमीडिया सेंट्रल लॉगिन एवं प्रोफ़ाइल मोडल -->
         <div id="login-modal" class="modal-overlay" style="display: none;">
             <div class="modal-dialog" style="max-width: 620px;">
                 <div class="modal-header">
-                    <h3 class="modal-title">🔐 विकिमेडिया लॉगिन एवं पात्रता सत्यापन</h3>
+                    <h3 class="modal-title">🌐 विकिमीडिया सेंट्रल लॉगिन (CentralAuth SUL)</h3>
                     <button id="btn-close-login-modal" class="modal-close-btn">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="preview-tabs">
-                        <button class="preview-tab-btn active" data-ltab="ltab-login">🔑 लॉगिन / बॉट पासवर्ड</button>
-                        <button class="preview-tab-btn" data-ltab="ltab-verify">🔍 पात्रता जाँचें</button>
-                        <button class="preview-tab-btn" data-ltab="ltab-gadget">⚡ विकिपीडिया गैजेट स्क्रिप्ट</button>
-                        <button class="preview-tab-btn" data-ltab="ltab-rules">📜 न्यूनतम नियम</button>
+                        <button class="preview-tab-btn active" data-ltab="ltab-verify">🌐 सेंट्रल प्रोफ़ाइल व सत्यापन</button>
+                        <button class="preview-tab-btn" data-ltab="ltab-login">🔑 बॉट पासवर्ड / API</button>
+                        <button class="preview-tab-btn" data-ltab="ltab-gadget">⚡ विकिपीडिया गैजेट</button>
                     </div>
 
-                    <!-- लॉगिन टैब -->
-                    <div id="ltab-login" class="login-tab-pane active" style="padding-top: 10px;">
-                        <p class="text-sm text-secondary" style="margin-bottom: 12px;">
-                            हिन्दी विकिपीडिया पर सीधे संपादन सहेजने या बॉट चलाने हेतु बॉट पासवर्ड अथवा टोकन दर्ज करें:
-                        </p>
-                        <div class="form-group" style="margin-bottom: 10px;">
-                            <label for="login-username" class="form-label">सदस्य नाम (Username / Bot User):</label>
+                    <!-- सेंट्रलऑथ प्रोफ़ाइल व सत्यापन टैब -->
+                    <div id="ltab-verify" class="login-tab-pane active" style="padding-top: 10px;">
+                        <div class="input-with-button" style="margin-bottom: 12px;">
+                            <input type="text" id="verify-username-input" class="form-control" placeholder="विकिमीडिया सदस्य नाम (उदा. विक्रम प्रताप)" value="विक्रम प्रताप" />
+                            <button id="btn-check-user-eligibility" class="btn btn-wikimedia" style="white-space: nowrap;">
+                                🌐 सेंट्रल लॉगिन
+                            </button>
+                        </div>
+                        <div id="verification-result-box" style="display: none;"></div>
+                    </div>
+
+                    <!-- बॉट पासवर्ड टैब -->
+                    <div id="ltab-login" class="login-tab-pane" style="display: none; padding-top: 10px;">
+                        <div class="form-group" style="margin-bottom: 8px;">
+                            <label for="login-username" class="form-label">बॉट / सदस्य नाम:</label>
                             <input type="text" id="login-username" class="form-control" placeholder="उदा: विक्रम प्रताप अथवा VikramBot" />
                         </div>
                         <div class="form-group" style="margin-bottom: 10px;">
                             <div class="label-with-addon">
-                                <label for="login-password" class="form-label">बॉट पासवर्ड (Bot Password):</label>
+                                <label for="login-password" class="form-label">बॉट पासवर्ड:</label>
                                 <a href="https://hi.wikipedia.org/wiki/विशेष:बॉट_पासवर्ड" target="_blank" class="link-btn">
-                                    विशेष:बॉट_पासवर्ड से बनाएँ ↗
+                                    विशेष:बॉट_पासवर्ड ↗
                                 </a>
                             </div>
                             <input type="password" id="login-password" class="form-control" placeholder="••••••••••••••••" />
-                            <small class="text-muted text-sm" style="margin-top: 4px;">
-                                🔒 सुरक्षा सूचना: पासवर्ड केवल आपके ब्राउज़र में रहता है और सीधे hi.wikipedia.org पर भेजा जाता है।
-                            </small>
-                        </div>
-                        <div class="form-group" style="margin-bottom: 14px;">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="chk-remember-login" checked /> इस ब्राउज़र में क्रेडेंशियल्स सुरक्षित रखें
-                            </label>
                         </div>
                         <div id="login-feedback" style="display: none; margin-bottom: 10px;"></div>
                         <button id="btn-do-login" class="btn btn-primary btn-block">
-                            🔐 लॉगिन व पात्रता सत्यापित करें
+                            🔑 बॉट क्रेडेंशियल्स सहेजें
                         </button>
                     </div>
 
-                    <!-- पात्रता जाँच टैब -->
-                    <div id="ltab-verify" class="login-tab-pane" style="display: none; padding-top: 10px;">
-                        <p class="text-sm text-secondary" style="margin-bottom: 12px;">
-                            बिना पासवर्ड दर्ज किए किसी भी हिन्दी विकिपीडिया सदस्य की स्वतः स्थापित पात्रता जाँचें:
-                        </p>
-                        <div class="input-with-button" style="margin-bottom: 12px;">
-                            <input type="text" id="verify-username-input" class="form-control" placeholder="सदस्य नाम: उदा. विक्रम प्रताप" value="विक्रम प्रताप" />
-                            <button id="btn-check-user-eligibility" class="btn btn-secondary">
-                                🔍 जाँचें
-                            </button>
-                        </div>
-                        <div id="verification-result-box" style="display: none;" class="card"></div>
-                    </div>
-
-                    <!-- गैजेट व स्क्रिप्ट टैब (अन्य सदस्यों हेतु) -->
+                    <!-- गैजेट व स्क्रिप्ट टैब -->
                     <div id="ltab-gadget" class="login-tab-pane" style="display: none; padding-top: 10px;">
                         <p class="text-sm text-secondary" style="margin-bottom: 8px;">
-                            <strong>अन्य सदस्यों हेतु:</strong> इस टूल को सीधे हिन्दी विकिपीडिया के बाईं ओर 'उपकरण' मेनू में जोड़ने के लिए अपने <code>common.js</code> में निम्न पंक्ति जोड़ें:
+                            विकिपीडिया पर चर्चा पृष्ठ खोलते ही इस टूल को बाईं ओर के 'उपकरण' मेनू में जोड़ने हेतु अपने <code>common.js</code> में जोड़ें:
                         </p>
-                        <div class="code-editor" style="height: 90px; padding: 8px; margin-bottom: 10px; font-size: 11.5px;" readonly>
+                        <div class="code-editor" style="height: 75px; padding: 8px; margin-bottom: 10px; font-size: 11.5px;" readonly>
 // [[विकिपीडिया:चर्चा समापन एवं पुरालेखण उपकरण]]
 mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/DiscussionArchiver.js');</div>
                         <p class="text-sm text-muted">
-                            कहाँ जोड़ें: <a href="https://hi.wikipedia.org/wiki/Special:MyPage/common.js" target="_blank" class="link-btn">Special:MyPage/common.js पर जाएँ ↗</a>
+                            <a href="https://hi.wikipedia.org/wiki/Special:MyPage/common.js" target="_blank" class="link-btn">Special:MyPage/common.js पर जाएँ ↗</a>
                         </p>
-                    </div>
-
-                    <!-- नियम टैब -->
-                    <div id="ltab-rules" class="login-tab-pane" style="display: none; padding-top: 10px;">
-                        <div class="security-box">
-                            <h4 style="font-size: 13.5px; margin-bottom: 6px;">🛡️ हिन्दी विकिपीडिया नीति दिशा-निर्देश:</h4>
-                            <ul style="padding-left: 18px; font-size: 12.5px; line-height: 1.6;">
-                                <li><strong>स्वतः स्थापित सदस्य (Autoconfirmed):</strong> खाता कम से कम 4 दिन पुराना होना चाहिए एवं न्यूनतम 10 वैध संपादन होने चाहिए।</li>
-                                <li><strong>बॉट नियम (Bot Policy):</strong> बिना बॉट ध्वज के स्वचालित स्क्रिप्ट से प्रति मिनट अत्यधिक संपादन न करें। आधिकारिक बॉट हेतु <code>[[विकिपीडिया:बॉट/अनुमोदन हेतु अनुरोध]]</code> पर अनुमति लें।</li>
-                                <li><strong>चर्चा समापन:</strong> गैर-प्रशासनिक चर्चाओं में आम सहमति का पालन करें; प्रशासनिक पृष्ठों पर केवल अधिकृत सदस्य ही निर्णय लें।</li>
-                            </ul>
-                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button id="btn-dismiss-login-modal" class="btn btn-secondary btn-sm">बंद करें</button>
                 </div>
             </div>
+        </div>
         </div>
 
         <!-- 5. गतिविधि लॉग कंसोल -->
