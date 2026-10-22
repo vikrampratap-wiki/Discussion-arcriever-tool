@@ -382,6 +382,172 @@
         }
     }
 
+    // =========================================================================
+    // 4.1 विकिमीडिया आधिकारिक OAuth 2.0 PKCE एवं सत्र प्रमाणीकरण
+    // =========================================================================
+
+    const DEFAULT_OAUTH_CLIENT_ID = '936e053f19472304dfdf1fbeee44e3cb';
+
+    function getOAuthClientId() {
+        return localStorage.getItem('da_oauth_client_id') || DEFAULT_OAUTH_CLIENT_ID;
+    }
+
+    function generateRandomString(length = 64) {
+        const array = new Uint8Array(length);
+        window.crypto.getRandomValues(array);
+        return Array.from(array, dec => ('0' + dec.toString(16)).slice(-2)).join('');
+    }
+
+    async function sha256(plain) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(plain);
+        return await window.crypto.subtle.digest('SHA-256', data);
+    }
+
+    function base64urlencode(buffer) {
+        let str = "";
+        const bytes = new Uint8Array(buffer);
+        for (let i = 0; i < bytes.byteLength; i++) {
+            str += String.fromCharCode(bytes[i]);
+        }
+        return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    }
+
+    async function generatePKCE() {
+        const codeVerifier = generateRandomString(64);
+        sessionStorage.setItem('da_oauth_verifier', codeVerifier);
+        const hashed = await sha256(codeVerifier);
+        return base64urlencode(hashed);
+    }
+
+    // विकिमीडिया आधिकारिक OAuth 2.0 लॉगिन प्रारंभ करें
+    async function startWikimediaOAuthLogin() {
+        const clientId = getOAuthClientId();
+        const redirectUri = window.location.origin + window.location.pathname;
+
+        try {
+            const codeChallenge = await generatePKCE();
+            const authUrl = new URL('https://meta.wikimedia.org/w/rest.php/oauth2/authorize');
+            authUrl.searchParams.set('client_id', clientId);
+            authUrl.searchParams.set('response_type', 'code');
+            authUrl.searchParams.set('redirect_uri', redirectUri);
+            authUrl.searchParams.set('code_challenge', codeChallenge);
+            authUrl.searchParams.set('code_challenge_method', 'S256');
+
+            logMessage('विकिमीडिया आधिकारिक OAuth 2.0 सत्यापन पृष्ठ पर भेजा जा रहा है...', 'info');
+            window.location.href = authUrl.toString();
+        } catch (e) {
+            console.error('OAuth initiation failed:', e);
+            alert('OAuth प्रारंभ करने में त्रुटि: ' + e.message);
+        }
+    }
+
+    // OAuth कॉल-बैक विनिमय (Handle OAuth 2.0 Redirect Callback)
+    async function handleOAuthCallback() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const oauthError = urlParams.get('error');
+        const oauthErrorDesc = urlParams.get('error_description');
+
+        if (oauthError) {
+            logMessage(`विकिमीडिया OAuth त्रुटि: ${oauthError} (${oauthErrorDesc || ''})`, 'error');
+            alert(`विकिमीडिया लॉगिन अस्वीकृत अथवा त्रुटिपूर्ण: ${oauthErrorDesc || oauthError}`);
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return false;
+        }
+
+        if (code) {
+            logMessage('विकिमीडिया ऑथराइजेशन कोड प्राप्त हुआ। टोकन विनिमय हो रहा है...', 'info');
+            const clientId = getOAuthClientId();
+            const redirectUri = window.location.origin + window.location.pathname;
+            const codeVerifier = sessionStorage.getItem('da_oauth_verifier');
+
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            const tokenUrl = 'https://meta.wikimedia.org/w/rest.php/oauth2/access_token';
+            const bodyParams = new URLSearchParams({
+                client_id: clientId,
+                grant_type: 'authorization_code',
+                code: code,
+                redirect_uri: redirectUri,
+                code_verifier: codeVerifier || ''
+            });
+
+            try {
+                const resp = await fetch(tokenUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: bodyParams
+                });
+
+                const tokenData = await resp.json();
+                if (tokenData.access_token) {
+                    sessionStorage.setItem('da_oauth_token', tokenData.access_token);
+                    const profileResp = await fetch('https://meta.wikimedia.org/w/rest.php/oauth2/resource/profile', {
+                        headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
+                    });
+                    const profileData = await profileResp.json();
+                    if (profileData && profileData.username) {
+                        const uName = profileData.username;
+                        const res = await checkUserEligibility(uName);
+                        if (res && res.exists && res.isAutoconfirmed) {
+                            state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
+                            localStorage.setItem('da_wiki_user', res.username);
+                            localStorage.setItem('da_username', res.username);
+                            updateAccessControlUI(state.auth);
+                            logMessage(`विकिमीडिया OAuth लॉगिन सफल: <b>${escapeHtml(res.username)}</b>। उपकरण अनलॉक हो गया है!`, 'success');
+                            return true;
+                        }
+                    }
+                } else {
+                    logMessage(`OAuth टोकन विनिमय विफल: ${JSON.stringify(tokenData)}`, 'warning');
+                }
+            } catch (e) {
+                console.error('OAuth token exchange error:', e);
+                logMessage(`OAuth नेटवर्क त्रुटि: ${e.message}`, 'error');
+            }
+        }
+        return false;
+    }
+
+    // विकिपीडिया सक्रिय सत्र पहचान पॉपअप (Popup Session Detect)
+    function startSessionDetectLogin(resBox) {
+        if (!resBox) resBox = document.getElementById('session-detect-result');
+        if (resBox) {
+            resBox.style.display = 'block';
+            resBox.innerHTML = '<span class="text-muted">⏳ विकिपीडिया विंडो खोली जा रही है...</span>';
+        }
+
+        window.open('https://hi.wikipedia.org/wiki/Special:MyPage?da_auth=1', 'wikiAuthPopup', 'width=580,height=520,scrollbars=yes,resizable=yes');
+        logMessage('विकिपीडिया सक्रिय सत्र सत्यापन विंडो खोली गई...', 'info');
+
+        if (resBox) {
+            resBox.innerHTML = `
+                <div class="security-box" style="margin-top:8px;">
+                    <p style="margin-bottom:6px;"><strong>📌 विकिपीडिया विंडो में सक्रिय सत्र जाँचा जा रहा है...</strong></p>
+                    <p style="margin:0; font-size:12px;" class="text-secondary">यदि पॉपअप में लॉगिन पृष्ठ दिखे तो वहां लॉगिन करें। सत्यापन होते ही विंडो स्वतः बंद होकर टूल अनलॉक हो जाएगा।</p>
+                </div>`;
+        }
+    }
+
+    // पोस्ट-मेसेज श्रोता (PostMessage Listener for Wiki Auth Bridge)
+    window.addEventListener('message', async (e) => {
+        if (e.data && e.data.type === 'WIKI_AUTH_SUCCESS' && e.data.username) {
+            const uName = e.data.username;
+            const res = await checkUserEligibility(uName);
+            if (res && res.exists && res.isAutoconfirmed) {
+                state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
+                localStorage.setItem('da_wiki_user', res.username);
+                localStorage.setItem('da_username', res.username);
+                updateAccessControlUI(state.auth);
+                const modal = document.getElementById('login-modal');
+                if (modal) modal.style.display = 'none';
+                logMessage(`विकिपीडिया सत्र पहचाना गया: <b>${escapeHtml(res.username)}</b>। उपकरण अनलॉक हो गया है!`, 'success');
+                loadPage((new URLSearchParams(window.location.search)).get('page') || 'विकिपीडिया:चौपाल');
+            }
+        }
+    });
+
     // सत्यापन कार्ड रेंडर (Verification Profile Card)
     function renderVerificationCard(res, resBox) {
         if (!resBox) resBox = document.getElementById('verification-result-box');
@@ -1330,82 +1496,32 @@
             });
         });
 
-        // 4. लॉगिन गेट Buton एवं सत्यापन
-        const gateLoginBtn = document.getElementById('btn-gate-login');
-        if (gateLoginBtn) {
-            gateLoginBtn.addEventListener('click', async () => {
-                const uInput = (document.getElementById('gate-username-input').value || '').trim();
-                if (!uInput) {
-                    alert('कृपया विकिपीडिया सदस्य नाम दर्ज करें।');
-                    return;
+        // 4. विकिमीडिया OAuth 2.0 एवं सत्र प्रमाणीकरण बटन
+        const oauthBtn = document.getElementById('btn-oauth-login');
+        if (oauthBtn) oauthBtn.addEventListener('click', startWikimediaOAuthLogin);
+
+        const modalOauthBtn = document.getElementById('btn-modal-oauth-login');
+        if (modalOauthBtn) modalOauthBtn.addEventListener('click', startWikimediaOAuthLogin);
+
+        const sessionDetectBtn = document.getElementById('btn-session-detect-login');
+        if (sessionDetectBtn) sessionDetectBtn.addEventListener('click', () => startSessionDetectLogin());
+
+        const modalSessionBtn = document.getElementById('btn-modal-session-login');
+        if (modalSessionBtn) modalSessionBtn.addEventListener('click', () => {
+            const resBox = document.getElementById('verification-result-box');
+            startSessionDetectLogin(resBox);
+        });
+
+        const saveClientBtn = document.getElementById('btn-save-client-id');
+        const clientIdInp = document.getElementById('oauth-client-id-input');
+        if (clientIdInp) clientIdInp.value = getOAuthClientId();
+        if (saveClientBtn && clientIdInp) {
+            saveClientBtn.addEventListener('click', () => {
+                const val = clientIdInp.value.trim();
+                if (val) {
+                    localStorage.setItem('da_oauth_client_id', val);
+                    alert('OAuth Client ID सफलतापूर्वक सहेजा गया: ' + val);
                 }
-                const resBox = document.getElementById('gate-verification-result');
-                if (resBox) {
-                    resBox.style.display = 'block';
-                    resBox.innerHTML = '<span class="text-muted">⏳ विकिपीडिया से खाता जाँचा जा रहा है...</span>';
-                }
-                gateLoginBtn.disabled = true;
-                gateLoginBtn.textContent = '⏳ जाँच हो रही है...';
-
-                const res = await checkUserEligibility(uInput);
-                gateLoginBtn.disabled = false;
-                gateLoginBtn.textContent = '✓ खाता जोड़ें व टूल अनलॉक करें';
-
-                if (!res || !res.exists) {
-                    if (resBox) resBox.innerHTML = `<div class="security-box danger">❌ सदस्य "${escapeHtml(uInput)}" विकिपीडिया पर नहीं मिला। कृपया सही सदस्य नाम दर्ज करें।</div>`;
-                    return;
-                }
-
-                if (!res.isAutoconfirmed) {
-                    if (resBox) resBox.innerHTML = `<div class="security-box danger">⚠️ सदस्य "${escapeHtml(res.username)}" अभी स्वतःस्थापित (Autoconfirmed) नहीं है। न्यूनतम 4 दिन पुराना खाता और 10 संपादन आवश्यक हैं।</div>`;
-                    return;
-                }
-
-                state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
-                localStorage.setItem('da_wiki_user', res.username);
-                localStorage.setItem('da_username', res.username);
-                updateAccessControlUI(state.auth);
-                logMessage(`विकिपीडिया खाता <b>${escapeHtml(res.username)}</b> सफलतापूर्वक जुड़ा। उपकरण अनलॉक हो गया है!`, 'success');
-
-                const initialTarget = (new URLSearchParams(window.location.search)).get('page') || 'विकिपीडिया:चौपाल';
-                const pageInp = document.getElementById('page-input');
-                if (pageInp) pageInp.value = initialTarget;
-                loadPage(initialTarget);
-            });
-        }
-
-        const gateInput = document.getElementById('gate-username-input');
-        if (gateInput) {
-            gateInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    if (gateLoginBtn) gateLoginBtn.click();
-                }
-            });
-        }
-
-        const checkEligBtn = document.getElementById('btn-check-user-eligibility');
-        if (checkEligBtn) {
-            checkEligBtn.addEventListener('click', async () => {
-                const uInput = document.getElementById('verify-username-input').value.trim();
-                if (!uInput) {
-                    alert('कृपया विकिपीडिया सदस्य नाम दर्ज करें।');
-                    return;
-                }
-
-                const resBox = document.getElementById('verification-result-box');
-                if (resBox) {
-                    resBox.style.display = 'block';
-                    resBox.innerHTML = '<div style="padding:10px; text-align:center;"><span class="text-muted">⏳ विकिपीडिया से जानकारी जाँची जा रही है...</span></div>';
-                }
-
-                const res = await checkUserEligibility(uInput);
-                if (!res || !res.exists) {
-                    if (resBox) resBox.innerHTML = `<div class="security-box danger">❌ <strong>त्रुटि:</strong> ${res ? escapeHtml(res.message || res.error) : 'यह सदस्य नाम विकिपीडिया पर नहीं मिला।'}</div>`;
-                    return;
-                }
-
-                renderVerificationCard(res, resBox);
-                logMessage(`विकिपीडिया सदस्य <b>${escapeHtml(res.username)}</b> सत्यापित।`, 'success');
             });
         }
 
@@ -1846,33 +1962,41 @@
             });
         }
 
-        // 16. प्रारंभिक URL पैरामीटर्स एवं स्वतः लॉगिन (?page=...&user=...)
+        // 16. प्रारंभिक URL पैरामीटर्स, OAuth एवं स्वतः लॉगिन
         const urlParams = new URLSearchParams(window.location.search);
         const queryPage = urlParams.get('page');
         const queryUser = urlParams.get('user');
-        const candidateUser = queryUser || state.auth.username;
         const initialTarget = queryPage || 'विकिपीडिया:चौपाल';
         const pageInp = document.getElementById('page-input');
         if (pageInp) pageInp.value = initialTarget;
 
-        if (candidateUser) {
-            checkUserEligibility(candidateUser).then(res => {
-                if (res && res.exists && res.isAutoconfirmed) {
-                    state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
-                    localStorage.setItem('da_wiki_user', res.username);
-                    localStorage.setItem('da_username', res.username);
+        // पहले विकिमीडिया OAuth 2.0 रीडायरेक्ट कॉलबैक जाँचें
+        handleOAuthCallback().then(isOAuthLogged => {
+            if (isOAuthLogged) {
+                loadPage(initialTarget);
+                return;
+            }
+
+            const candidateUser = queryUser || state.auth.username;
+            if (candidateUser) {
+                checkUserEligibility(candidateUser).then(res => {
+                    if (res && res.exists && res.isAutoconfirmed) {
+                        state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
+                        localStorage.setItem('da_wiki_user', res.username);
+                        localStorage.setItem('da_username', res.username);
+                        updateAccessControlUI(state.auth);
+                        logMessage(`विकिपीडिया खाता <b>${escapeHtml(res.username)}</b> सक्रिय। उपकरण अनलॉक हो गया है।`, 'success');
+                        loadPage(initialTarget);
+                    } else {
+                        updateAccessControlUI(state.auth);
+                    }
+                }).catch(() => {
                     updateAccessControlUI(state.auth);
-                    logMessage(`विकिपीडिया खाता <b>${escapeHtml(res.username)}</b> सक्रिय। उपकरण अनलॉक हो गया है।`, 'success');
-                    loadPage(initialTarget);
-                } else {
-                    updateAccessControlUI(state.auth);
-                }
-            }).catch(() => {
+                });
+            } else {
                 updateAccessControlUI(state.auth);
-            });
-        } else {
-            updateAccessControlUI(state.auth);
-        }
+            }
+        });
     });
 
 })();

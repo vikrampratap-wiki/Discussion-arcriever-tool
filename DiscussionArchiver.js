@@ -12,6 +12,16 @@
 (function () {
     'use strict';
 
+    // 1. त्वरित प्रमाणीकरण ब्रिज (Auth Bridge for Web Tool)
+    if (window.opener && window.location.search.indexOf('da_auth=1') !== -1) {
+        var authUser = mw.config.get('wgUserName');
+        if (authUser) {
+            window.opener.postMessage({ type: 'WIKI_AUTH_SUCCESS', username: authUser }, '*');
+            setTimeout(function () { window.close(); }, 400);
+            return;
+        }
+    }
+
     // केवल चर्चा/वार्ता पृष्ठों और विकिपीडिया नामस्थान पर लोड करें
     var ns = mw.config.get('wgNamespaceNumber');
     if (ns % 2 !== 1 && ns !== 4) {

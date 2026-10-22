@@ -1114,40 +1114,42 @@ body {
         <section id="auth-gate-card" class="card auth-gate-card" style="display: none; padding: 32px 24px;">
             <div style="max-width: 640px; margin: 0 auto; text-align: center;">
                 <div style="font-size: 46px; margin-bottom: 12px;">🔐</div>
-                <h2 style="margin-bottom: 10px; font-size: 22px;">उपकरण उपयोग हेतु विकिपीडिया लॉगिन अनिवार्य</h2>
+                <h2 style="margin-bottom: 10px; font-size: 22px;">उपकरण उपयोग हेतु विकिपीडिया लॉगिन आवश्यक</h2>
                 <p class="text-secondary" style="font-size: 14px; line-height: 1.6; margin-bottom: 22px;">
                     हिन्दी विकिपीडिया पर चर्चा समापन अथवा पुरालेखन करने हेतु विकिपीडिया खाते से लॉगिन होना आवश्यक है, जिससे आपके द्वारा किए गए सभी संपादन सीधे आपके विकिपीडिया खाते के <strong>योगदान (Contributions)</strong> में दर्ज हों।
                 </p>
 
-                <div style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 18px; margin-bottom: 20px; text-align: left;">
-                    <h4 style="margin: 0 0 10px 0; font-size: 14px; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
-                        <span>1️⃣</span> विकिपीडिया पर आधिकारिक लॉगिन करें:
-                    </h4>
-                    <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5;">
-                        यदि आप विकिपीडिया पर पहले से लॉगिन नहीं हैं, तो नीचे बटन पर क्लिक करके लॉगिन करें (पासवर्ड केवल आधिकारिक विकिपीडिया सर्वर पर ही दिया जाता है):
+                <!-- विकल्प 1: विकिमीडिया OAuth 2.0 (अन्य टूल्स की तरह आधिकारिक रीडायरेक्ट लॉगिन) -->
+                <div class="auth-action-box" style="background: var(--bg-card); border: 2px solid var(--primary); border-radius: 8px; padding: 18px; margin-bottom: 16px; text-align: left;">
+                    <h3 style="margin: 0 0 8px 0; font-size: 15px; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                        <span>🌐</span> विकिमीडिया OAuth 2.0 से लॉगिन करें
+                    </h3>
+                    <p style="font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px;">
+                        अन्य विकिपीडिया उपकरणों (जैसे XTools, PetScan) की तरह यह आधिकारिक विकिमीडिया OAuth 2.0 से जुड़ा है। नीचे बटन दबाते ही यह आपको विकिमीडिया के आधिकारिक अनुमोदन पृष्ठ पर ले जाएगा और पुष्टि के बाद सीधे टूल में लॉगिन कर वापस ले आएगा।
                     </p>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px;">
-                        <a href="https://hi.wikipedia.org/w/index.php?title=Special:UserLogin&returnto=Special:MyPage" target="_blank" class="btn btn-wikimedia btn-sm" style="text-decoration: none;">
-                            🚀 विकिपीडिया लॉगिन पृष्ठ खोलें ↗
-                        </a>
-                        <a href="https://hi.wikipedia.org/wiki/Special:MyPage" target="_blank" class="link-btn" title="देखें कि वर्तमान में विकिपीडिया पर कौन सा खाता सक्रिय है">
-                            🔍 सक्रिय खाता जाँचें (Special:MyPage) ↗
-                        </a>
-                    </div>
+                    <button id="btn-oauth-login" class="btn btn-wikimedia" style="width: 100%; justify-content: center; padding: 10px 16px; font-size: 15px; font-weight: 700;">
+                        🚀 विकिमीडिया OAuth से लॉगिन करें (Log in with Wikimedia)
+                    </button>
+                    <div id="oauth-status-result" style="display: none; margin-top: 10px;"></div>
+                </div>
 
-                    <h4 style="margin: 14px 0 8px 0; font-size: 14px; color: var(--text-primary); display: flex; align-items: center; gap: 6px; border-top: 1px dashed var(--border-color); padding-top: 14px;">
-                        <span>2️⃣</span> अपना विकिपीडिया सदस्य नाम दर्ज करें:
+                <!-- विकल्प 2: विकिपीडिया सक्रिय सत्र द्वारा 1-क्लिक त्वरित लॉगिन -->
+                <div class="auth-action-box" style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; margin-bottom: 16px; text-align: left;">
+                    <h4 style="margin: 0 0 6px 0; font-size: 14px; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+                        <span>⚡</span> विकिपीडिया सक्रिय सत्र द्वारा 1-क्लिक लॉगिन:
                     </h4>
-                    <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 10px;">
-                        यह केवल <strong>एक बार</strong> करना होता है। उपकरण इसे इस ब्राउज़र में सुरक्षित याद रखेगा ताकि आपको बार-बार अपना नाम या पासवर्ड न देना पड़े:
+                    <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px;">
+                        यदि आप विकिपीडिया पर पहले से लॉगिन हैं, तो नीचे बटन दबाएँ — यह आपके ब्राउज़र के विकिपीडिया सत्र की स्वतः पुष्टि कर लेगा:
                     </p>
-                    <div class="input-with-button">
-                        <input type="text" id="gate-username-input" class="form-control" placeholder="उदा: विक्रम प्रताप अथवा Vikram pratap" />
-                        <button id="btn-gate-login" class="btn btn-primary" style="white-space: nowrap;">
-                            ✓ खाता जोड़ें व टूल अनलॉक करें
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button id="btn-session-detect-login" class="btn btn-primary btn-sm">
+                            🔍 सक्रिय विकिपीडिया सत्र से लॉगिन करें
                         </button>
+                        <a href="https://hi.wikipedia.org/wiki/Special:MyPage" target="_blank" class="link-btn">
+                            👤 सक्रिय खाता देखें (Special:MyPage) ↗
+                        </a>
                     </div>
-                    <div id="gate-verification-result" style="display: none; margin-top: 10px;"></div>
+                    <div id="session-detect-result" style="display: none; margin-top: 10px;"></div>
                 </div>
 
                 <div style="border-top: 1px solid var(--border-color); padding-top: 16px; text-align: left; font-size: 12.5px; color: var(--text-muted); line-height: 1.6;">
@@ -1155,6 +1157,20 @@ body {
                     <code style="display: block; background: var(--bg-primary); padding: 6px 10px; border-radius: 4px; margin: 6px 0; font-size: 11.5px; border: 1px solid var(--border-subtle);">mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/DiscussionArchiver.js');</code>
                     इसके बाद विकिपीडिया पर चर्चा पृष्ठ खोलते ही बाईं ओर के 'उपकरण' मेनू से यह टूल अपने आप आपके खाते के साथ 1-क्लिक में खुल जाएगा।
                 </div>
+
+                <details style="margin-top: 14px; text-align: left; font-size: 12px; color: var(--text-muted);">
+                    <summary style="cursor: pointer; font-weight: 600;">⚙️ OAuth Client ID विन्यास (वैकल्पिक)</summary>
+                    <div style="margin-top: 8px; padding: 10px; background: var(--bg-subtle); border-radius: 6px;">
+                        <label for="oauth-client-id-input" class="form-label" style="font-size: 11.5px;">Wikimedia OAuth 2.0 Client ID:</label>
+                        <div class="input-with-button">
+                            <input type="text" id="oauth-client-id-input" class="form-control form-control-sm" placeholder="Client ID दर्ज करें" />
+                            <button id="btn-save-client-id" class="btn btn-secondary btn-xs">सहेजें</button>
+                        </div>
+                        <p style="margin: 4px 0 0 0; font-size: 11px;">
+                            <a href="https://meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration/propose" target="_blank" class="link-btn">मेटा-विकि पर OAuth Consumer पंजीकृत करें ↗</a>
+                        </p>
+                    </div>
+                </details>
             </div>
         </section>
 
@@ -1684,41 +1700,28 @@ body {
 
                     <!-- खाता सत्यापन टैब -->
                     <div id="ltab-verify" class="login-tab-pane active" style="padding-top: 10px;">
-                        <!-- चरण 1: विकिमीडिया लॉगिन -->
-                        <div class="wiki-auth-step-box" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:6px; padding:12px; margin-bottom:12px;">
-                            <div style="font-weight:600; font-size:13.5px; margin-bottom:6px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
-                                <span>1️⃣</span> आधिकारिक विकिमीडिया लॉगिन:
+                        <div class="wiki-auth-step-box" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:6px; padding:14px; margin-bottom:12px;">
+                            <div style="font-weight:700; font-size:14px; margin-bottom:6px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+                                <span>🌐</span> विकिमीडिया OAuth 2.0 से आधिकारिक लॉगिन:
                             </div>
-                            <p style="margin:0 0 10px 0; font-size:12px; color:var(--text-secondary); line-height:1.5;">
-                                विकिपीडिया पर चर्चा समापन अथवा पुरालेखन करने हेतु विकिपीडिया पर आपका लॉगिन होना अनिवार्य है ताकि संपादन आपके खाते में जुड़े।
+                            <p style="margin:0 0 12px 0; font-size:12.5px; color:var(--text-secondary); line-height:1.5;">
+                                विकिमीडिया के आधिकारिक OAuth से सीधे जुड़ें। यह आपको विकिमीडिया के अनुमति पृष्ठ पर ले जाएगा और अनुमोदन के बाद स्वतः टूल में लॉगिन कर वापस ले आएगा:
                             </p>
-                            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                                <a href="https://hi.wikipedia.org/w/index.php?title=Special:UserLogin&returnto=Special:MyPage" target="_blank" id="btn-goto-wiki-login" class="btn btn-wikimedia btn-sm" style="text-decoration:none;">
-                                    🚀 विकिपीडिया लॉगिन पृष्ठ खोलें ↗
-                                </a>
-                                <a href="https://hi.wikipedia.org/wiki/Special:MyPage" target="_blank" class="link-btn" title="देखें कि वर्तमान में विकिपीडिया पर कौन सा खाता सक्रिय है">
-                                    🔍 सक्रिय विकिपीडिया खाता जाँचें (Special:MyPage) ↗
-                                </a>
-                            </div>
+                            <button id="btn-modal-oauth-login" class="btn btn-wikimedia" style="width:100%; justify-content:center; padding:9px 14px; font-weight:700;">
+                                🚀 विकिमीडिया OAuth से लॉगिन करें (Log in with Wikimedia)
+                            </button>
                         </div>
 
-                        <!-- चरण 2: सदस्य नाम व पात्रता सत्यापन -->
-                        <div class="wiki-auth-step-box" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:6px; padding:12px; margin-bottom:10px;">
-                            <div style="font-weight:600; font-size:13.5px; margin-bottom:6px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
-                                <span>2️⃣</span> सदस्य नाम सत्यापन:
+                        <div class="wiki-auth-step-box" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:6px; padding:14px; margin-bottom:10px;">
+                            <div style="font-weight:700; font-size:14px; margin-bottom:6px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+                                <span>⚡</span> सक्रिय विकिपीडिया ब्राउज़र सत्र द्वारा लॉगिन:
                             </div>
-                            <p style="margin:0 0 8px 0; font-size:12px; color:var(--text-secondary); line-height:1.4;">
-                                विकिमीडिया पर लॉगिन के बाद अपना सदस्य नाम दर्ज करें ताकि टूल आपकी पात्रता (स्वतःस्थापित सदस्य) की पुष्टि कर सके:
+                            <p style="margin:0 0 10px 0; font-size:12px; color:var(--text-secondary); line-height:1.5;">
+                                यदि आपके ब्राउज़र में विकिपीडिया पहले से खुला व लॉगिन है:
                             </p>
-                            <div class="input-with-button" style="margin-bottom: 6px;">
-                                <input type="text" id="verify-username-input" class="form-control" placeholder="उदा: विक्रम प्रताप अथवा Vikram pratap" value="" />
-                                <button id="btn-check-user-eligibility" class="btn btn-primary" style="white-space: nowrap;">
-                                    ✓ खाता सत्यापित करें
-                                </button>
-                            </div>
-                            <p class="text-sm text-muted" style="margin:4px 0 0 0; font-size:11px; line-height:1.4;">
-                                🔒 <strong>सुरक्षा नियम:</strong> विकिपीडिया की आंतरिक प्रणाली के कारण संपादन केवल उसी सदस्य के नाम से सुरक्षित होगा जो आपके ब्राउज़र में वास्तव में विकिपीडिया पर लॉगिन है।
-                            </p>
+                            <button id="btn-modal-session-login" class="btn btn-primary btn-sm">
+                                🔍 सक्रिय सत्र से तुरंत लॉगिन करें
+                            </button>
                         </div>
 
                         <div id="verification-result-box" style="display: none;"></div>
@@ -2148,6 +2151,172 @@ mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/Di
             return null;
         }
     }
+
+    // =========================================================================
+    // 4.1 विकिमीडिया आधिकारिक OAuth 2.0 PKCE एवं सत्र प्रमाणीकरण
+    // =========================================================================
+
+    const DEFAULT_OAUTH_CLIENT_ID = '936e053f19472304dfdf1fbeee44e3cb';
+
+    function getOAuthClientId() {
+        return localStorage.getItem('da_oauth_client_id') || DEFAULT_OAUTH_CLIENT_ID;
+    }
+
+    function generateRandomString(length = 64) {
+        const array = new Uint8Array(length);
+        window.crypto.getRandomValues(array);
+        return Array.from(array, dec => ('0' + dec.toString(16)).slice(-2)).join('');
+    }
+
+    async function sha256(plain) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(plain);
+        return await window.crypto.subtle.digest('SHA-256', data);
+    }
+
+    function base64urlencode(buffer) {
+        let str = "";
+        const bytes = new Uint8Array(buffer);
+        for (let i = 0; i < bytes.byteLength; i++) {
+            str += String.fromCharCode(bytes[i]);
+        }
+        return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    }
+
+    async function generatePKCE() {
+        const codeVerifier = generateRandomString(64);
+        sessionStorage.setItem('da_oauth_verifier', codeVerifier);
+        const hashed = await sha256(codeVerifier);
+        return base64urlencode(hashed);
+    }
+
+    // विकिमीडिया आधिकारिक OAuth 2.0 लॉगिन प्रारंभ करें
+    async function startWikimediaOAuthLogin() {
+        const clientId = getOAuthClientId();
+        const redirectUri = window.location.origin + window.location.pathname;
+
+        try {
+            const codeChallenge = await generatePKCE();
+            const authUrl = new URL('https://meta.wikimedia.org/w/rest.php/oauth2/authorize');
+            authUrl.searchParams.set('client_id', clientId);
+            authUrl.searchParams.set('response_type', 'code');
+            authUrl.searchParams.set('redirect_uri', redirectUri);
+            authUrl.searchParams.set('code_challenge', codeChallenge);
+            authUrl.searchParams.set('code_challenge_method', 'S256');
+
+            logMessage('विकिमीडिया आधिकारिक OAuth 2.0 सत्यापन पृष्ठ पर भेजा जा रहा है...', 'info');
+            window.location.href = authUrl.toString();
+        } catch (e) {
+            console.error('OAuth initiation failed:', e);
+            alert('OAuth प्रारंभ करने में त्रुटि: ' + e.message);
+        }
+    }
+
+    // OAuth कॉल-बैक विनिमय (Handle OAuth 2.0 Redirect Callback)
+    async function handleOAuthCallback() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const oauthError = urlParams.get('error');
+        const oauthErrorDesc = urlParams.get('error_description');
+
+        if (oauthError) {
+            logMessage(`विकिमीडिया OAuth त्रुटि: ${oauthError} (${oauthErrorDesc || ''})`, 'error');
+            alert(`विकिमीडिया लॉगिन अस्वीकृत अथवा त्रुटिपूर्ण: ${oauthErrorDesc || oauthError}`);
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return false;
+        }
+
+        if (code) {
+            logMessage('विकिमीडिया ऑथराइजेशन कोड प्राप्त हुआ। टोकन विनिमय हो रहा है...', 'info');
+            const clientId = getOAuthClientId();
+            const redirectUri = window.location.origin + window.location.pathname;
+            const codeVerifier = sessionStorage.getItem('da_oauth_verifier');
+
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            const tokenUrl = 'https://meta.wikimedia.org/w/rest.php/oauth2/access_token';
+            const bodyParams = new URLSearchParams({
+                client_id: clientId,
+                grant_type: 'authorization_code',
+                code: code,
+                redirect_uri: redirectUri,
+                code_verifier: codeVerifier || ''
+            });
+
+            try {
+                const resp = await fetch(tokenUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: bodyParams
+                });
+
+                const tokenData = await resp.json();
+                if (tokenData.access_token) {
+                    sessionStorage.setItem('da_oauth_token', tokenData.access_token);
+                    const profileResp = await fetch('https://meta.wikimedia.org/w/rest.php/oauth2/resource/profile', {
+                        headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
+                    });
+                    const profileData = await profileResp.json();
+                    if (profileData && profileData.username) {
+                        const uName = profileData.username;
+                        const res = await checkUserEligibility(uName);
+                        if (res && res.exists && res.isAutoconfirmed) {
+                            state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
+                            localStorage.setItem('da_wiki_user', res.username);
+                            localStorage.setItem('da_username', res.username);
+                            updateAccessControlUI(state.auth);
+                            logMessage(`विकिमीडिया OAuth लॉगिन सफल: <b>${escapeHtml(res.username)}</b>। उपकरण अनलॉक हो गया है!`, 'success');
+                            return true;
+                        }
+                    }
+                } else {
+                    logMessage(`OAuth टोकन विनिमय विफल: ${JSON.stringify(tokenData)}`, 'warning');
+                }
+            } catch (e) {
+                console.error('OAuth token exchange error:', e);
+                logMessage(`OAuth नेटवर्क त्रुटि: ${e.message}`, 'error');
+            }
+        }
+        return false;
+    }
+
+    // विकिपीडिया सक्रिय सत्र पहचान पॉपअप (Popup Session Detect)
+    function startSessionDetectLogin(resBox) {
+        if (!resBox) resBox = document.getElementById('session-detect-result');
+        if (resBox) {
+            resBox.style.display = 'block';
+            resBox.innerHTML = '<span class="text-muted">⏳ विकिपीडिया विंडो खोली जा रही है...</span>';
+        }
+
+        window.open('https://hi.wikipedia.org/wiki/Special:MyPage?da_auth=1', 'wikiAuthPopup', 'width=580,height=520,scrollbars=yes,resizable=yes');
+        logMessage('विकिपीडिया सक्रिय सत्र सत्यापन विंडो खोली गई...', 'info');
+
+        if (resBox) {
+            resBox.innerHTML = `
+                <div class="security-box" style="margin-top:8px;">
+                    <p style="margin-bottom:6px;"><strong>📌 विकिपीडिया विंडो में सक्रिय सत्र जाँचा जा रहा है...</strong></p>
+                    <p style="margin:0; font-size:12px;" class="text-secondary">यदि पॉपअप में लॉगिन पृष्ठ दिखे तो वहां लॉगिन करें। सत्यापन होते ही विंडो स्वतः बंद होकर टूल अनलॉक हो जाएगा।</p>
+                </div>`;
+        }
+    }
+
+    // पोस्ट-मेसेज श्रोता (PostMessage Listener for Wiki Auth Bridge)
+    window.addEventListener('message', async (e) => {
+        if (e.data && e.data.type === 'WIKI_AUTH_SUCCESS' && e.data.username) {
+            const uName = e.data.username;
+            const res = await checkUserEligibility(uName);
+            if (res && res.exists && res.isAutoconfirmed) {
+                state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
+                localStorage.setItem('da_wiki_user', res.username);
+                localStorage.setItem('da_username', res.username);
+                updateAccessControlUI(state.auth);
+                const modal = document.getElementById('login-modal');
+                if (modal) modal.style.display = 'none';
+                logMessage(`विकिपीडिया सत्र पहचाना गया: <b>${escapeHtml(res.username)}</b>। उपकरण अनलॉक हो गया है!`, 'success');
+                loadPage((new URLSearchParams(window.location.search)).get('page') || 'विकिपीडिया:चौपाल');
+            }
+        }
+    });
 
     // सत्यापन कार्ड रेंडर (Verification Profile Card)
     function renderVerificationCard(res, resBox) {
@@ -3097,82 +3266,32 @@ mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/Di
             });
         });
 
-        // 4. लॉगिन गेट Buton एवं सत्यापन
-        const gateLoginBtn = document.getElementById('btn-gate-login');
-        if (gateLoginBtn) {
-            gateLoginBtn.addEventListener('click', async () => {
-                const uInput = (document.getElementById('gate-username-input').value || '').trim();
-                if (!uInput) {
-                    alert('कृपया विकिपीडिया सदस्य नाम दर्ज करें।');
-                    return;
+        // 4. विकिमीडिया OAuth 2.0 एवं सत्र प्रमाणीकरण बटन
+        const oauthBtn = document.getElementById('btn-oauth-login');
+        if (oauthBtn) oauthBtn.addEventListener('click', startWikimediaOAuthLogin);
+
+        const modalOauthBtn = document.getElementById('btn-modal-oauth-login');
+        if (modalOauthBtn) modalOauthBtn.addEventListener('click', startWikimediaOAuthLogin);
+
+        const sessionDetectBtn = document.getElementById('btn-session-detect-login');
+        if (sessionDetectBtn) sessionDetectBtn.addEventListener('click', () => startSessionDetectLogin());
+
+        const modalSessionBtn = document.getElementById('btn-modal-session-login');
+        if (modalSessionBtn) modalSessionBtn.addEventListener('click', () => {
+            const resBox = document.getElementById('verification-result-box');
+            startSessionDetectLogin(resBox);
+        });
+
+        const saveClientBtn = document.getElementById('btn-save-client-id');
+        const clientIdInp = document.getElementById('oauth-client-id-input');
+        if (clientIdInp) clientIdInp.value = getOAuthClientId();
+        if (saveClientBtn && clientIdInp) {
+            saveClientBtn.addEventListener('click', () => {
+                const val = clientIdInp.value.trim();
+                if (val) {
+                    localStorage.setItem('da_oauth_client_id', val);
+                    alert('OAuth Client ID सफलतापूर्वक सहेजा गया: ' + val);
                 }
-                const resBox = document.getElementById('gate-verification-result');
-                if (resBox) {
-                    resBox.style.display = 'block';
-                    resBox.innerHTML = '<span class="text-muted">⏳ विकिपीडिया से खाता जाँचा जा रहा है...</span>';
-                }
-                gateLoginBtn.disabled = true;
-                gateLoginBtn.textContent = '⏳ जाँच हो रही है...';
-
-                const res = await checkUserEligibility(uInput);
-                gateLoginBtn.disabled = false;
-                gateLoginBtn.textContent = '✓ खाता जोड़ें व टूल अनलॉक करें';
-
-                if (!res || !res.exists) {
-                    if (resBox) resBox.innerHTML = `<div class="security-box danger">❌ सदस्य "${escapeHtml(uInput)}" विकिपीडिया पर नहीं मिला। कृपया सही सदस्य नाम दर्ज करें।</div>`;
-                    return;
-                }
-
-                if (!res.isAutoconfirmed) {
-                    if (resBox) resBox.innerHTML = `<div class="security-box danger">⚠️ सदस्य "${escapeHtml(res.username)}" अभी स्वतःस्थापित (Autoconfirmed) नहीं है। न्यूनतम 4 दिन पुराना खाता और 10 संपादन आवश्यक हैं।</div>`;
-                    return;
-                }
-
-                state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
-                localStorage.setItem('da_wiki_user', res.username);
-                localStorage.setItem('da_username', res.username);
-                updateAccessControlUI(state.auth);
-                logMessage(`विकिपीडिया खाता <b>${escapeHtml(res.username)}</b> सफलतापूर्वक जुड़ा। उपकरण अनलॉक हो गया है!`, 'success');
-
-                const initialTarget = (new URLSearchParams(window.location.search)).get('page') || 'विकिपीडिया:चौपाल';
-                const pageInp = document.getElementById('page-input');
-                if (pageInp) pageInp.value = initialTarget;
-                loadPage(initialTarget);
-            });
-        }
-
-        const gateInput = document.getElementById('gate-username-input');
-        if (gateInput) {
-            gateInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    if (gateLoginBtn) gateLoginBtn.click();
-                }
-            });
-        }
-
-        const checkEligBtn = document.getElementById('btn-check-user-eligibility');
-        if (checkEligBtn) {
-            checkEligBtn.addEventListener('click', async () => {
-                const uInput = document.getElementById('verify-username-input').value.trim();
-                if (!uInput) {
-                    alert('कृपया विकिपीडिया सदस्य नाम दर्ज करें।');
-                    return;
-                }
-
-                const resBox = document.getElementById('verification-result-box');
-                if (resBox) {
-                    resBox.style.display = 'block';
-                    resBox.innerHTML = '<div style="padding:10px; text-align:center;"><span class="text-muted">⏳ विकिपीडिया से जानकारी जाँची जा रही है...</span></div>';
-                }
-
-                const res = await checkUserEligibility(uInput);
-                if (!res || !res.exists) {
-                    if (resBox) resBox.innerHTML = `<div class="security-box danger">❌ <strong>त्रुटि:</strong> ${res ? escapeHtml(res.message || res.error) : 'यह सदस्य नाम विकिपीडिया पर नहीं मिला।'}</div>`;
-                    return;
-                }
-
-                renderVerificationCard(res, resBox);
-                logMessage(`विकिपीडिया सदस्य <b>${escapeHtml(res.username)}</b> सत्यापित।`, 'success');
             });
         }
 
@@ -3613,33 +3732,41 @@ mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/Di
             });
         }
 
-        // 16. प्रारंभिक URL पैरामीटर्स एवं स्वतः लॉगिन (?page=...&user=...)
+        // 16. प्रारंभिक URL पैरामीटर्स, OAuth एवं स्वतः लॉगिन
         const urlParams = new URLSearchParams(window.location.search);
         const queryPage = urlParams.get('page');
         const queryUser = urlParams.get('user');
-        const candidateUser = queryUser || state.auth.username;
         const initialTarget = queryPage || 'विकिपीडिया:चौपाल';
         const pageInp = document.getElementById('page-input');
         if (pageInp) pageInp.value = initialTarget;
 
-        if (candidateUser) {
-            checkUserEligibility(candidateUser).then(res => {
-                if (res && res.exists && res.isAutoconfirmed) {
-                    state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
-                    localStorage.setItem('da_wiki_user', res.username);
-                    localStorage.setItem('da_username', res.username);
+        // पहले विकिमीडिया OAuth 2.0 रीडायरेक्ट कॉलबैक जाँचें
+        handleOAuthCallback().then(isOAuthLogged => {
+            if (isOAuthLogged) {
+                loadPage(initialTarget);
+                return;
+            }
+
+            const candidateUser = queryUser || state.auth.username;
+            if (candidateUser) {
+                checkUserEligibility(candidateUser).then(res => {
+                    if (res && res.exists && res.isAutoconfirmed) {
+                        state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
+                        localStorage.setItem('da_wiki_user', res.username);
+                        localStorage.setItem('da_username', res.username);
+                        updateAccessControlUI(state.auth);
+                        logMessage(`विकिपीडिया खाता <b>${escapeHtml(res.username)}</b> सक्रिय। उपकरण अनलॉक हो गया है।`, 'success');
+                        loadPage(initialTarget);
+                    } else {
+                        updateAccessControlUI(state.auth);
+                    }
+                }).catch(() => {
                     updateAccessControlUI(state.auth);
-                    logMessage(`विकिपीडिया खाता <b>${escapeHtml(res.username)}</b> सक्रिय। उपकरण अनलॉक हो गया है।`, 'success');
-                    loadPage(initialTarget);
-                } else {
-                    updateAccessControlUI(state.auth);
-                }
-            }).catch(() => {
+                });
+            } else {
                 updateAccessControlUI(state.auth);
-            });
-        } else {
-            updateAccessControlUI(state.auth);
-        }
+            }
+        });
     });
 
 })();

@@ -43,40 +43,42 @@
         <section id="auth-gate-card" class="card auth-gate-card" style="display: none; padding: 32px 24px;">
             <div style="max-width: 640px; margin: 0 auto; text-align: center;">
                 <div style="font-size: 46px; margin-bottom: 12px;">🔐</div>
-                <h2 style="margin-bottom: 10px; font-size: 22px;">उपकरण उपयोग हेतु विकिपीडिया लॉगिन अनिवार्य</h2>
+                <h2 style="margin-bottom: 10px; font-size: 22px;">उपकरण उपयोग हेतु विकिपीडिया लॉगिन आवश्यक</h2>
                 <p class="text-secondary" style="font-size: 14px; line-height: 1.6; margin-bottom: 22px;">
                     हिन्दी विकिपीडिया पर चर्चा समापन अथवा पुरालेखन करने हेतु विकिपीडिया खाते से लॉगिन होना आवश्यक है, जिससे आपके द्वारा किए गए सभी संपादन सीधे आपके विकिपीडिया खाते के <strong>योगदान (Contributions)</strong> में दर्ज हों।
                 </p>
 
-                <div style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 18px; margin-bottom: 20px; text-align: left;">
-                    <h4 style="margin: 0 0 10px 0; font-size: 14px; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
-                        <span>1️⃣</span> विकिपीडिया पर आधिकारिक लॉगिन करें:
-                    </h4>
-                    <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5;">
-                        यदि आप विकिपीडिया पर पहले से लॉगिन नहीं हैं, तो नीचे बटन पर क्लिक करके लॉगिन करें (पासवर्ड केवल आधिकारिक विकिपीडिया सर्वर पर ही दिया जाता है):
+                <!-- विकल्प 1: विकिमीडिया OAuth 2.0 (अन्य टूल्स की तरह आधिकारिक रीडायरेक्ट लॉगिन) -->
+                <div class="auth-action-box" style="background: var(--bg-card); border: 2px solid var(--primary); border-radius: 8px; padding: 18px; margin-bottom: 16px; text-align: left;">
+                    <h3 style="margin: 0 0 8px 0; font-size: 15px; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                        <span>🌐</span> विकिमीडिया OAuth 2.0 से लॉगिन करें
+                    </h3>
+                    <p style="font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px;">
+                        अन्य विकिपीडिया उपकरणों (जैसे XTools, PetScan) की तरह यह आधिकारिक विकिमीडिया OAuth 2.0 से जुड़ा है। नीचे बटन दबाते ही यह आपको विकिमीडिया के आधिकारिक अनुमोदन पृष्ठ पर ले जाएगा और पुष्टि के बाद सीधे टूल में लॉगिन कर वापस ले आएगा।
                     </p>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px;">
-                        <a href="https://hi.wikipedia.org/w/index.php?title=Special:UserLogin&returnto=Special:MyPage" target="_blank" class="btn btn-wikimedia btn-sm" style="text-decoration: none;">
-                            🚀 विकिपीडिया लॉगिन पृष्ठ खोलें ↗
-                        </a>
-                        <a href="https://hi.wikipedia.org/wiki/Special:MyPage" target="_blank" class="link-btn" title="देखें कि वर्तमान में विकिपीडिया पर कौन सा खाता सक्रिय है">
-                            🔍 सक्रिय खाता जाँचें (Special:MyPage) ↗
-                        </a>
-                    </div>
+                    <button id="btn-oauth-login" class="btn btn-wikimedia" style="width: 100%; justify-content: center; padding: 10px 16px; font-size: 15px; font-weight: 700;">
+                        🚀 विकिमीडिया OAuth से लॉगिन करें (Log in with Wikimedia)
+                    </button>
+                    <div id="oauth-status-result" style="display: none; margin-top: 10px;"></div>
+                </div>
 
-                    <h4 style="margin: 14px 0 8px 0; font-size: 14px; color: var(--text-primary); display: flex; align-items: center; gap: 6px; border-top: 1px dashed var(--border-color); padding-top: 14px;">
-                        <span>2️⃣</span> अपना विकिपीडिया सदस्य नाम दर्ज करें:
+                <!-- विकल्प 2: विकिपीडिया सक्रिय सत्र द्वारा 1-क्लिक त्वरित लॉगिन -->
+                <div class="auth-action-box" style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; margin-bottom: 16px; text-align: left;">
+                    <h4 style="margin: 0 0 6px 0; font-size: 14px; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+                        <span>⚡</span> विकिपीडिया सक्रिय सत्र द्वारा 1-क्लिक लॉगिन:
                     </h4>
-                    <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 10px;">
-                        यह केवल <strong>एक बार</strong> करना होता है। उपकरण इसे इस ब्राउज़र में सुरक्षित याद रखेगा ताकि आपको बार-बार अपना नाम या पासवर्ड न देना पड़े:
+                    <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px;">
+                        यदि आप विकिपीडिया पर पहले से लॉगिन हैं, तो नीचे बटन दबाएँ — यह आपके ब्राउज़र के विकिपीडिया सत्र की स्वतः पुष्टि कर लेगा:
                     </p>
-                    <div class="input-with-button">
-                        <input type="text" id="gate-username-input" class="form-control" placeholder="उदा: विक्रम प्रताप अथवा Vikram pratap" />
-                        <button id="btn-gate-login" class="btn btn-primary" style="white-space: nowrap;">
-                            ✓ खाता जोड़ें व टूल अनलॉक करें
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button id="btn-session-detect-login" class="btn btn-primary btn-sm">
+                            🔍 सक्रिय विकिपीडिया सत्र से लॉगिन करें
                         </button>
+                        <a href="https://hi.wikipedia.org/wiki/Special:MyPage" target="_blank" class="link-btn">
+                            👤 सक्रिय खाता देखें (Special:MyPage) ↗
+                        </a>
                     </div>
-                    <div id="gate-verification-result" style="display: none; margin-top: 10px;"></div>
+                    <div id="session-detect-result" style="display: none; margin-top: 10px;"></div>
                 </div>
 
                 <div style="border-top: 1px solid var(--border-color); padding-top: 16px; text-align: left; font-size: 12.5px; color: var(--text-muted); line-height: 1.6;">
@@ -84,6 +86,20 @@
                     <code style="display: block; background: var(--bg-primary); padding: 6px 10px; border-radius: 4px; margin: 6px 0; font-size: 11.5px; border: 1px solid var(--border-subtle);">mw.loader.load('https://vikrampratap-wiki.github.io/Discussion-arcriever-tool/DiscussionArchiver.js');</code>
                     इसके बाद विकिपीडिया पर चर्चा पृष्ठ खोलते ही बाईं ओर के 'उपकरण' मेनू से यह टूल अपने आप आपके खाते के साथ 1-क्लिक में खुल जाएगा।
                 </div>
+
+                <details style="margin-top: 14px; text-align: left; font-size: 12px; color: var(--text-muted);">
+                    <summary style="cursor: pointer; font-weight: 600;">⚙️ OAuth Client ID विन्यास (वैकल्पिक)</summary>
+                    <div style="margin-top: 8px; padding: 10px; background: var(--bg-subtle); border-radius: 6px;">
+                        <label for="oauth-client-id-input" class="form-label" style="font-size: 11.5px;">Wikimedia OAuth 2.0 Client ID:</label>
+                        <div class="input-with-button">
+                            <input type="text" id="oauth-client-id-input" class="form-control form-control-sm" placeholder="Client ID दर्ज करें" />
+                            <button id="btn-save-client-id" class="btn btn-secondary btn-xs">सहेजें</button>
+                        </div>
+                        <p style="margin: 4px 0 0 0; font-size: 11px;">
+                            <a href="https://meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration/propose" target="_blank" class="link-btn">मेटा-विकि पर OAuth Consumer पंजीकृत करें ↗</a>
+                        </p>
+                    </div>
+                </details>
             </div>
         </section>
 
@@ -613,41 +629,28 @@
 
                     <!-- खाता सत्यापन टैब -->
                     <div id="ltab-verify" class="login-tab-pane active" style="padding-top: 10px;">
-                        <!-- चरण 1: विकिमीडिया लॉगिन -->
-                        <div class="wiki-auth-step-box" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:6px; padding:12px; margin-bottom:12px;">
-                            <div style="font-weight:600; font-size:13.5px; margin-bottom:6px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
-                                <span>1️⃣</span> आधिकारिक विकिमीडिया लॉगिन:
+                        <div class="wiki-auth-step-box" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:6px; padding:14px; margin-bottom:12px;">
+                            <div style="font-weight:700; font-size:14px; margin-bottom:6px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+                                <span>🌐</span> विकिमीडिया OAuth 2.0 से आधिकारिक लॉगिन:
                             </div>
-                            <p style="margin:0 0 10px 0; font-size:12px; color:var(--text-secondary); line-height:1.5;">
-                                विकिपीडिया पर चर्चा समापन अथवा पुरालेखन करने हेतु विकिपीडिया पर आपका लॉगिन होना अनिवार्य है ताकि संपादन आपके खाते में जुड़े।
+                            <p style="margin:0 0 12px 0; font-size:12.5px; color:var(--text-secondary); line-height:1.5;">
+                                विकिमीडिया के आधिकारिक OAuth से सीधे जुड़ें। यह आपको विकिमीडिया के अनुमति पृष्ठ पर ले जाएगा और अनुमोदन के बाद स्वतः टूल में लॉगिन कर वापस ले आएगा:
                             </p>
-                            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                                <a href="https://hi.wikipedia.org/w/index.php?title=Special:UserLogin&returnto=Special:MyPage" target="_blank" id="btn-goto-wiki-login" class="btn btn-wikimedia btn-sm" style="text-decoration:none;">
-                                    🚀 विकिपीडिया लॉगिन पृष्ठ खोलें ↗
-                                </a>
-                                <a href="https://hi.wikipedia.org/wiki/Special:MyPage" target="_blank" class="link-btn" title="देखें कि वर्तमान में विकिपीडिया पर कौन सा खाता सक्रिय है">
-                                    🔍 सक्रिय विकिपीडिया खाता जाँचें (Special:MyPage) ↗
-                                </a>
-                            </div>
+                            <button id="btn-modal-oauth-login" class="btn btn-wikimedia" style="width:100%; justify-content:center; padding:9px 14px; font-weight:700;">
+                                🚀 विकिमीडिया OAuth से लॉगिन करें (Log in with Wikimedia)
+                            </button>
                         </div>
 
-                        <!-- चरण 2: सदस्य नाम व पात्रता सत्यापन -->
-                        <div class="wiki-auth-step-box" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:6px; padding:12px; margin-bottom:10px;">
-                            <div style="font-weight:600; font-size:13.5px; margin-bottom:6px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
-                                <span>2️⃣</span> सदस्य नाम सत्यापन:
+                        <div class="wiki-auth-step-box" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:6px; padding:14px; margin-bottom:10px;">
+                            <div style="font-weight:700; font-size:14px; margin-bottom:6px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+                                <span>⚡</span> सक्रिय विकिपीडिया ब्राउज़र सत्र द्वारा लॉगिन:
                             </div>
-                            <p style="margin:0 0 8px 0; font-size:12px; color:var(--text-secondary); line-height:1.4;">
-                                विकिमीडिया पर लॉगिन के बाद अपना सदस्य नाम दर्ज करें ताकि टूल आपकी पात्रता (स्वतःस्थापित सदस्य) की पुष्टि कर सके:
+                            <p style="margin:0 0 10px 0; font-size:12px; color:var(--text-secondary); line-height:1.5;">
+                                यदि आपके ब्राउज़र में विकिपीडिया पहले से खुला व लॉगिन है:
                             </p>
-                            <div class="input-with-button" style="margin-bottom: 6px;">
-                                <input type="text" id="verify-username-input" class="form-control" placeholder="उदा: विक्रम प्रताप अथवा Vikram pratap" value="" />
-                                <button id="btn-check-user-eligibility" class="btn btn-primary" style="white-space: nowrap;">
-                                    ✓ खाता सत्यापित करें
-                                </button>
-                            </div>
-                            <p class="text-sm text-muted" style="margin:4px 0 0 0; font-size:11px; line-height:1.4;">
-                                🔒 <strong>सुरक्षा नियम:</strong> विकिपीडिया की आंतरिक प्रणाली के कारण संपादन केवल उसी सदस्य के नाम से सुरक्षित होगा जो आपके ब्राउज़र में वास्तव में विकिपीडिया पर लॉगिन है।
-                            </p>
+                            <button id="btn-modal-session-login" class="btn btn-primary btn-sm">
+                                🔍 सक्रिय सत्र से तुरंत लॉगिन करें
+                            </button>
                         </div>
 
                         <div id="verification-result-box" style="display: none;"></div>
