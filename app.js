@@ -674,46 +674,24 @@
         }
     }
 
-    // एक्सेस कंट्रोल एवं हेडर बैज प्रबंधन (Access Control & Header UI)
+    // एक्सेस कंट्रोल एवं हेडर बैज प्रबंधन (Open Workspace)
     function updateAccessControlUI(info) {
         if (!info) info = state.auth;
-        const isAuth = !!(info && info.isLoggedIn && info.isAutoconfirmed);
+        const workspace = document.getElementById('tool-workspace');
+        if (workspace) workspace.style.display = 'block';
 
         const gateCard = document.getElementById('auth-gate-card');
-        const workspace = document.getElementById('tool-workspace');
-        const pill = document.getElementById('logged-user-pill');
-        const loginBtn = document.getElementById('btn-open-login');
+        if (gateCard) gateCard.style.display = 'none';
 
-        if (isAuth) {
-            if (gateCard) gateCard.style.display = 'none';
-            if (workspace) workspace.style.display = 'block';
-            if (loginBtn) loginBtn.style.display = 'none';
-            if (pill) {
+        const pill = document.getElementById('logged-user-pill');
+        if (pill) {
+            if (info && info.username) {
                 pill.style.display = 'inline-flex';
                 const nameEl = document.getElementById('logged-user-name');
                 if (nameEl) nameEl.textContent = info.username;
-                const avatarEl = document.getElementById('user-avatar-initial');
-                if (avatarEl) avatarEl.textContent = (info.username[0] || 'व').toUpperCase();
-
-                const badgeEl = document.getElementById('logged-user-badge');
-                if (badgeEl) {
-                    if (info.isBot) {
-                        badgeEl.className = 'badge-bot';
-                        badgeEl.textContent = '🤖 बॉट';
-                    } else if (info.isSysop) {
-                        badgeEl.className = 'badge-sysop';
-                        badgeEl.textContent = '🛡️ प्रबंधक';
-                    } else {
-                        badgeEl.className = 'badge-autoconfirmed';
-                        badgeEl.textContent = '✓ विकिपीडिया खाता';
-                    }
-                }
+            } else {
+                pill.style.display = 'none';
             }
-        } else {
-            if (gateCard) gateCard.style.display = 'block';
-            if (workspace) workspace.style.display = 'none';
-            if (loginBtn) loginBtn.style.display = 'inline-flex';
-            if (pill) pill.style.display = 'none';
         }
     }
 
@@ -1100,15 +1078,9 @@
         });
     }
 
-    // सीधे विकिपीडिया पर संपादन सुरक्षित करना (Direct Save via Active Browser Session / API)
+    // सीधे विकिपीडिया पर संपादन सुरक्षित करना (Direct Save via Active Browser Session)
     function executeDirectWikipediaEdit() {
         if (!state.activePreviewPayload) return;
-
-        if (!state.auth.isAutoconfirmed) {
-            alert('त्रुटि: सीधे विकिपीडिया पर सहेजने हेतु सदस्य का "स्वतः स्थापित सदस्य" (Autoconfirmed) होना अनिवार्य है। कृपया पहले अपनी पात्रता सत्यापित करें।');
-            openLoginModal('ltab-verify');
-            return;
-        }
 
         const payload = state.activePreviewPayload;
         const isBotFlag = document.getElementById('chk-bot-flag') ? document.getElementById('chk-bot-flag').checked : false;
@@ -1409,8 +1381,7 @@
 
         const userBadge = document.getElementById('modal-user-attribution-badge');
         if (userBadge) {
-            const uName = state.auth.username || 'अज्ञात';
-            userBadge.innerHTML = `👤 <strong>संपादन कर्ता:</strong> <a href="https://hi.wikipedia.org/wiki/Special:Contributions/${encodeURIComponent(uName)}" target="_blank" class="link-btn">सदस्य:${escapeHtml(uName)} (योगदान देखें ↗)</a> &nbsp;|&nbsp; <em>यह संपादन सीधे आपके विकिपीडिया खाते के योगदान (Contributions) में जुड़ेगा।</em>`;
+            userBadge.innerHTML = `👤 <strong>संपादन माध्यम:</strong> यह संपादन आपके ब्राउज़र के सक्रिय विकिपीडिया सत्र के माध्यम से सुरक्षित होगा।`;
         }
 
         const wikiEditBtn = document.getElementById('btn-open-wiki-edit');
@@ -1988,50 +1959,20 @@
                 return;
             }
 
-            // यदि URL में सदस्य नाम दिया गया है तो टोकन का कड़ा सत्यापन अनिवार्य है
-            if (queryUser) {
-                if (isValidWikiSessionToken(queryUser, queryToken, queryTs)) {
-                    // वैध टोकन: विकिपीडिया के अंदर सक्रिय सत्र से खुला है
-                    window.history.replaceState({}, document.title, window.location.pathname + (queryPage ? '?page=' + encodeURIComponent(queryPage) : ''));
-                    checkUserEligibility(queryUser).then(res => {
-                        if (res && res.exists && res.isAutoconfirmed) {
-                            state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
-                            localStorage.setItem('da_wiki_user', res.username);
-                            localStorage.setItem('da_username', res.username);
-                            localStorage.setItem('da_auth_verified', '1');
-                            updateAccessControlUI(state.auth);
-                            logMessage(`सुरक्षित विकिपीडिया सत्र सत्यापित: <b>${escapeHtml(res.username)}</b>। उपकरण अनलॉक हो गया है।`, 'success');
-                            loadPage(initialTarget);
-                        } else {
-                            updateAccessControlUI(state.auth);
-                            logMessage(`खाता '${escapeHtml(queryUser)}' स्वतः स्थापित अर्हता पूरी नहीं करता।`, 'warning');
-                        }
-                    }).catch(() => {
-                        updateAccessControlUI(state.auth);
-                    });
-                } else {
-                    // अवैध अथवा अनाधिकृत टोकन (प्रतिरूपण का प्रयास)
-                    logMessage(`⚠️ सुरक्षा चेतावनी: सदस्य '${escapeHtml(queryUser)}' का अनाधिकृत टोकन अस्वीकृत। प्रतिरूपण वर्जित है।`, 'error');
-                    alert(`⚠️ सुरक्षा चेतावनी: अनाधिकृत प्रवेश अस्वीकृत!\nआप किसी अन्य सदस्य का नाम लिखकर उनके खाते का प्रतिरूपण नहीं कर सकते।\nकृपया विकिपीडिया में अपने खाते से लॉगिन करके '📚 चर्चा समापन' टैब से टूल खोलें।`);
-                    window.history.replaceState({}, document.title, window.location.pathname + (queryPage ? '?page=' + encodeURIComponent(queryPage) : ''));
-                    updateAccessControlUI(state.auth);
-                }
-            } else if (state.auth.username && localStorage.getItem('da_auth_verified') === '1') {
-                // पहले से इस डिवाइस में सुरक्षित सत्यापित सत्र
-                checkUserEligibility(state.auth.username).then(res => {
-                    if (res && res.exists && res.isAutoconfirmed) {
+            // खुला उपकरण: हमेशा पृष्ठ लोड करें और कार्यक्षेत्र सक्रिय रखें
+            updateAccessControlUI();
+
+            if (queryUser && isValidWikiSessionToken(queryUser, queryToken, queryTs)) {
+                window.history.replaceState({}, document.title, window.location.pathname + (queryPage ? '?page=' + encodeURIComponent(queryPage) : ''));
+                checkUserEligibility(queryUser).then(res => {
+                    if (res && res.exists) {
                         state.auth = Object.assign(state.auth, res, { isLoggedIn: true, verified: true });
-                        updateAccessControlUI(state.auth);
-                        loadPage(initialTarget);
-                    } else {
-                        updateAccessControlUI(state.auth);
+                        logMessage(`सक्रिय विकिपीडिया सत्र: <b>${escapeHtml(res.username)}</b>`, 'info');
                     }
-                }).catch(() => {
-                    updateAccessControlUI(state.auth);
-                });
-            } else {
-                updateAccessControlUI(state.auth);
+                }).catch(() => {});
             }
+
+            loadPage(initialTarget);
         });
     });
 
