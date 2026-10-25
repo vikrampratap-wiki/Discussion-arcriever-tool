@@ -3,8 +3,8 @@
 
 [![License: MIT](https://img.shields.io/badge/अनुज्ञापत्र-MIT-blue.svg)](LICENSE)
 [![Hindi Wikipedia](https://img.shields.io/badge/विकिपीडिया-hi.wikipedia.org-orange.svg)](https://hi.wikipedia.org)
-[![Authentication](https://img.shields.io/badge/प्रमाणीकरण-Wikimedia%20OAuth%202.0%20(PKCE)-brightgreen.svg)](#-अधिकृत-प्रमाणीकरण-एवं-सुरक्षा-व्यवस्था)
 [![Platform](https://img.shields.io/badge/मंच-GitHub%20Pages%20%7C%20Client--Side-lightgrey.svg)](#)
+[![Antigravity Skills](https://img.shields.io/badge/दस्तावेज़-Antigravity%20Skills-4285F4.svg)](https://antigravity.google/docs/skills/)
 
 ---
 
@@ -125,9 +125,11 @@ python3 server.py --port 8080
 
 ```text
 Discussion-arcriever-tool/
+├── .agents/skills/hindi-wiki-archiver/
+│   └── SKILL.md                     # Antigravity Skills कार्यप्रवाह एवं ऑटोमेशन विनिर्देश
 ├── index.html                       # मुख्य प्रशासनिक वेब इंटरफ़ेस एवं मोडल संरचना
 ├── style.css                        # उत्तरदायी शैली-पत्रक (प्रकाश/अंधकार थीम समर्थन)
-├── app.js                           # कोर लॉजिक: OAuth 2.0 PKCE, MediaWiki API, पार्सर
+├── app.js                           # कोर लॉजिक: MediaWiki API, पार्सर, पुरालेख नियंत्रक
 ├── DiscussionArchiver.js            # विकिपीडिया common.js लोडर एवं प्रमाणीकरण ब्रिज
 ├── DiscussionArchiver_Standalone.html # एकल आत्मनिर्भर ऑफ़लाइन वितरण बंडल
 ├── server.py                        # स्थानीय HTTP सर्वर (Python 3 मानक लाइब्रेरी)
@@ -135,6 +137,14 @@ Discussion-arcriever-tool/
 ├── LICENSE                          # MIT खुला-स्रोत अनुज्ञापत्र
 └── README.md                        # आधिकारिक प्रलेखन (यह फ़ाइल)
 ```
+
+---
+
+## 📚 संदर्भ एवं विकास दस्तावेज़ (Documentation & References)
+
+- **[Google Antigravity Skills Documentation](https://antigravity.google/docs/skills/)**: उपकरण के स्वचालन (Automation), कार्यप्रवाह प्रबंधन एवं एआई एजेंट स्किल्स की आधिकारिक विनिर्देश मार्गदर्शिका।
+- **[MediaWiki Action API Documentation](https://www.mediawiki.org/wiki/API:Main_page)**: विकिपीडिया के वार्ता पन्नों, साँचों एवं संपादन के साथ इंटरैक्शन हेतु आधिकारिक तकनीकी संदर्भ।
+- **[Wikimedia REST API Reference](https://www.mediawiki.org/wiki/API:REST_API)**: विकिमीडिया की आधुनिक REST सेवाओं का तकनीकी संदर्भ।
 
 ---
 
